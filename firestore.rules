@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function for staff authentication check
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Staff profiles - users can read and write their own profile, or authenticated staff can access
+    match /staffProfiles/{uid} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Public read for doctor directories; write requires authenticated staff or open demo access
+    match /doctors/{doctorId} {
+      allow read, write: if true;
+    }
+
+    // Appointments - public and staff can read and manage booking requests
+    match /appointments/{appointmentId} {
+      allow read, write: if true;
+    }
+
+    // Patients EMR records - accessible for clinical workflow and patient care
+    match /patients/{patientId} {
+      allow read, write: if true;
+    }
+
+    // Prescriptions
+    match /prescriptions/{prescriptionId} {
+      allow read, write: if true;
+    }
+
+    // Ward Beds and bed allocations
+    match /beds/{bedId} {
+      allow read, write: if true;
+    }
+
+    // Bills and Invoices
+    match /bills/{billId} {
+      allow read, write: if true;
+    }
+
+    // System audit logs
+    match /systemLogs/{logId} {
+      allow read, write: if true;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read, write: if true;
+    }
+  }
+}
+

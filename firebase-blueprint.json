@@ -1,0 +1,163 @@
+{
+  "entities": {
+    "StaffProfile": {
+      "title": "StaffProfile",
+      "description": "Hospital staff user profile and authentication role credentials",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique Firebase Authentication UID" },
+        "email": { "type": "string", "format": "email", "description": "Hospital staff work email" },
+        "displayName": { "type": "string", "description": "Full staff name and title" },
+        "role": { "type": "string", "enum": ["Admin", "Doctor", "Receptionist", "Pharmacist", "Nurse"], "description": "Access control role" },
+        "doctorId": { "type": "string", "description": "Linked doctor ID for practitioner accounts" },
+        "department": { "type": "string", "description": "Assigned hospital department" },
+        "badgeNumber": { "type": "string", "description": "Clinical staff badge number" },
+        "lastLoginAt": { "type": "string", "description": "ISO timestamp of last sign in" }
+      },
+      "required": ["uid", "email", "displayName", "role"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Electronic health record patient profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Patient identifier" },
+        "name": { "type": "string", "description": "Full name" },
+        "age": { "type": "number", "description": "Age in years" },
+        "gender": { "type": "string", "description": "Gender" },
+        "status": { "type": "string", "description": "Clinical admission status" },
+        "room": { "type": "string", "description": "Assigned ward or room" }
+      },
+      "required": ["id", "name", "status"]
+    },
+    "Doctor": {
+      "title": "Doctor",
+      "description": "Physician practitioner profile and schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Doctor identifier" },
+        "name": { "type": "string", "description": "Doctor full name and title" },
+        "specialty": { "type": "string", "description": "Medical specialty" },
+        "status": { "type": "string", "description": "On-duty status" }
+      },
+      "required": ["id", "name", "specialty", "status"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Scheduled clinic consultation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Appointment ID" },
+        "patientId": { "type": "string", "description": "Target patient ID" },
+        "patientName": { "type": "string", "description": "Patient name" },
+        "doctorId": { "type": "string", "description": "Doctor ID" },
+        "doctorName": { "type": "string", "description": "Doctor name" },
+        "date": { "type": "string", "description": "ISO date YYYY-MM-DD" },
+        "time": { "type": "string", "description": "Time slot" },
+        "status": { "type": "string", "description": "Status" }
+      },
+      "required": ["id", "patientId", "doctorId", "date", "time", "status"]
+    },
+    "Prescription": {
+      "title": "Prescription",
+      "description": "Clinical medication prescription order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Prescription ID" },
+        "patientId": { "type": "string", "description": "Patient ID" },
+        "patientName": { "type": "string", "description": "Patient name" },
+        "doctorName": { "type": "string", "description": "Prescribing physician" },
+        "status": { "type": "string", "description": "Dispensing status" }
+      },
+      "required": ["id", "patientId", "patientName", "status"]
+    },
+    "BedAlloc": {
+      "title": "BedAlloc",
+      "description": "Ward and bed allocation capacity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Bed allocation identifier" },
+        "type": { "type": "string", "description": "Ward type" },
+        "total": { "type": "number", "description": "Total bed capacity" },
+        "occupied": { "type": "number", "description": "Occupied bed count" },
+        "available": { "type": "number", "description": "Available bed count" }
+      },
+      "required": ["id", "type", "total", "occupied", "available"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Medical billing invoice and claim status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Invoice number" },
+        "patientId": { "type": "string", "description": "Patient ID" },
+        "totalAmount": { "type": "number", "description": "Total billed amount" },
+        "status": { "type": "string", "description": "Payment status" }
+      },
+      "required": ["id", "patientId", "totalAmount", "status"]
+    },
+    "SystemLog": {
+      "title": "SystemLog",
+      "description": "HIPAA system audit and diagnostic log record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Log ID" },
+        "action": { "type": "string", "description": "System action performed" },
+        "user": { "type": "string", "description": "User or service performing the action" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["id", "action", "user", "timestamp"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Clinical broadcast and alert notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Notification ID" },
+        "title": { "type": "string", "description": "Notification title" },
+        "time": { "type": "string", "description": "Display time" },
+        "type": { "type": "string", "description": "Severity level" },
+        "isRead": { "type": "boolean", "description": "Read status" }
+      },
+      "required": ["id", "title", "time", "type", "isRead"]
+    }
+  },
+  "firestore": {
+    "/staffProfiles/{uid}": {
+      "schema": "StaffProfile",
+      "description": "Staff authentication profiles and RBAC credentials"
+    },
+    "/patients/{patientId}": {
+      "schema": "Patient",
+      "description": "Patient electronic health records"
+    },
+    "/doctors/{doctorId}": {
+      "schema": "Doctor",
+      "description": "Physician directories and on-duty schedules"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Hospital appointments and scheduler bookings"
+    },
+    "/prescriptions/{prescriptionId}": {
+      "schema": "Prescription",
+      "description": "Clinical pharmacy prescriptions and orders"
+    },
+    "/beds/{bedId}": {
+      "schema": "BedAlloc",
+      "description": "Hospital bed capacities and allocations"
+    },
+    "/bills/{billId}": {
+      "schema": "Invoice",
+      "description": "Patient invoices and billing records"
+    },
+    "/systemLogs/{logId}": {
+      "schema": "SystemLog",
+      "description": "Hospital audit logs and security diagnostics"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Hospital broadcast alerts and clinical notifications"
+    }
+  }
+}
