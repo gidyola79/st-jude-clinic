@@ -122,13 +122,16 @@ export interface Appointment {
   time: string;
   specialty: string;
   type: 'In-Person' | 'Telehealth Video';
-  status: 'Scheduled' | 'In-Consultation' | 'Completed' | 'Cancelled';
+  status: 'Scheduled' | 'Checked In' | 'In-Consultation' | 'Completed' | 'Cancelled';
   reason: string;
   notes?: string;
   isUrgent: boolean;
   insuranceClaimStatus?: 'Pending' | 'Approved' | 'Rejected';
   consultationFee: number;
   isBilled?: boolean;
+  checkInCode?: string;
+  queueNumber?: string;
+  arrivedAt?: string;
 }
 
 export interface Notification {
@@ -139,6 +142,8 @@ export interface Notification {
   type: 'Alert' | 'Info' | 'Success' | 'Schedule';
   isRead: boolean;
   targetAudience?: 'public' | 'staff' | 'admin' | 'all';
+  createdAt?: number;
+  archived?: boolean;
 }
 
 export interface BedAlloc {

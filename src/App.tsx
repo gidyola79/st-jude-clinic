@@ -37,6 +37,7 @@ import {
   VisitorGuideItem
 } from './types';
 import { loadState, saveState } from './utils/storage';
+import { playClinicalAlertSound } from './utils/audioAlerts';
 import { 
   initializeHospitalDatabase, 
   subscribePatients, 
@@ -66,6 +67,7 @@ import SessionInactivityModal from './components/SessionInactivityModal';
 // Interactive Modals
 import AiAssistantModal from './components/AiAssistantModal';
 import TelehealthRoomModal from './components/TelehealthRoomModal';
+import ShiftHandoverReportModal from './components/ShiftHandoverReportModal';
 
 import { StaffUser } from './types';
 import { 
@@ -115,6 +117,10 @@ export default function App() {
   // Simulation Daemon toggle state
   const [isSimulationEnabled, setIsSimulationEnabled] = useState<boolean>(true);
 
+  // Sound alerts toggle state (Clinical Environment Noise Abatement)
+  const [soundAlertsEnabled, setSoundAlertsEnabled] = useState<boolean>(() => loadState('soundAlertsEnabled', true));
+  const [soundVolume, setSoundVolume] = useState<number>(() => loadState('soundVolume', 0.28));
+
   // Search & Central Persistent States
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [doctors, setDoctors] = useState<Doctor[]>(() => loadState('doctors', INITIAL_DOCTORS));
@@ -144,6 +150,9 @@ export default function App() {
 
   const [isTelehealthModalOpen, setIsTelehealthModalOpen] = useState<boolean>(false);
   const [telehealthSelectedAppt, setTelehealthSelectedAppt] = useState<any>(null);
+
+  // Shift Handover Report Modal State
+  const [showShiftHandoverModal, setShowShiftHandoverModal] = useState<boolean>(false);
 
   // Admin Authorization Modal State
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState<boolean>(false);
@@ -320,6 +329,8 @@ export default function App() {
   useEffect(() => { saveState('invoices', invoices); }, [invoices]);
   useEffect(() => { saveState('claims', claims); }, [claims]);
   useEffect(() => { saveState('patientMessages', patientMessages); }, [patientMessages]);
+  useEffect(() => { saveState('soundAlertsEnabled', soundAlertsEnabled); }, [soundAlertsEnabled]);
+  useEffect(() => { saveState('soundVolume', soundVolume); }, [soundVolume]);
 
   // Dark Mode Sync Side-Effect
   useEffect(() => {
@@ -501,6 +512,11 @@ export default function App() {
         return updated.slice(0, 3);
       });
 
+      // Play soft acoustic chime if audio alerts are enabled (IEC 60601-1-8 compliant)
+      if (soundAlertsEnabled) {
+        playClinicalAlertSound(type, true, soundVolume);
+      }
+
       setTimeout(() => {
         setActiveToasts(prev => prev.filter(t => t.id !== notId));
       }, 5000);
@@ -596,6 +612,7 @@ export default function App() {
             setDarkMode={setDarkMode}
             onQuickAction={handleQuickAction}
             onShowShortcutsHelp={() => setShowShortcutHelp(true)}
+            onOpenShiftHandover={() => setShowShiftHandoverModal(true)}
             staffUser={staffUser}
             onSignOutStaff={handleSignOutStaff}
           />
@@ -682,6 +699,7 @@ export default function App() {
                 if (appMode === 'public') setAppMode('emr');
               }}
               onRequestRoleChange={handleRequestRoleChange}
+              onOpenShiftHandover={() => setShowShiftHandoverModal(true)}
               staffUser={staffUser}
               onSignOutStaff={handleSignOutStaff}
             />
@@ -900,6 +918,10 @@ export default function App() {
                       addNotification={addNotification}
                       isSimulationEnabled={isSimulationEnabled}
                       setIsSimulationEnabled={setIsSimulationEnabled}
+                      soundAlertsEnabled={soundAlertsEnabled}
+                      setSoundAlertsEnabled={setSoundAlertsEnabled}
+                      soundVolume={soundVolume}
+                      setSoundVolume={setSoundVolume}
                     />
                   </AccessControl>
                 )}
@@ -1013,7 +1035,7 @@ export default function App() {
       <AnimatePresence>
         {showShortcutHelp && (
           <div 
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-slate-950/70 flex items-center justify-center z-50 p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) setShowShortcutHelp(false);
             }}
@@ -1104,6 +1126,19 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Shift Handover Report Modal */}
+      <ShiftHandoverReportModal
+        isOpen={showShiftHandoverModal}
+        onClose={() => setShowShiftHandoverModal(false)}
+        emergencyCases={emergencyCases}
+        pharmacyPrescriptions={pharmacyPrescriptions}
+        notifications={notifications}
+        systemLogs={systemLogs}
+        activeRole={activeRole}
+        activeDoctorName={selectActingDoctorStr}
+        patients={patients}
+      />
 
       {/* Global Admin Authorization Master Key Modal */}
       <AdminAuthModal

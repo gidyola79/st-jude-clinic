@@ -22,10 +22,15 @@ import {
   LayoutGrid,
   List,
   Info,
-  CalendarRange
+  CalendarRange,
+  QrCode,
+  Camera,
+  Scan
 } from 'lucide-react';
 import { Appointment, Doctor, Patient, UserRole } from '../types';
 import { saveAppointment, updateAppointmentRecord } from '../lib/dbService';
+import FrontDeskQrScannerModal from './FrontDeskQrScannerModal';
+import QrCodeCheckInModal from './QrCodeCheckInModal';
 
 interface AppointmentsViewProps {
   appointments: Appointment[];
@@ -99,6 +104,10 @@ export default function AppointmentsView({
   
   // Day Inspection Drawer / Popover
   const [inspectingDate, setInspectingDate] = useState<string | null>(null);
+  
+  // Front Desk Optical QR Scanner & Patient Pass Modals
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [selectedQrPassAppt, setSelectedQrPassAppt] = useState<Appointment | null>(null);
 
   // Form State
   const [patientId, setPatientId] = useState('');
@@ -117,16 +126,32 @@ export default function AppointmentsView({
 
   // Keyboard Escape listener to dismiss booking modal or inspection drawer
   useEffect(() => {
-    if (!showBookingModal && !inspectingDate) return;
+    if (!showBookingModal && !inspectingDate && !isScannerOpen && !selectedQrPassAppt) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowBookingModal(false);
         setInspectingDate(null);
+        setIsScannerOpen(false);
+        setSelectedQrPassAppt(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showBookingModal, inspectingDate]);
+  }, [showBookingModal, inspectingDate, isScannerOpen, selectedQrPassAppt]);
+
+  // Front desk QR check-in execution
+  const handleCheckInAppointment = (appointmentId: string, queueNumber: string) => {
+    updateAppointmentRecord(appointmentId, { status: 'Checked In' }).catch(console.warn);
+    setAppointments(
+      appointments.map(a => a.id === appointmentId ? { ...a, status: 'Checked In' } : a)
+    );
+    const targetAppt = appointments.find(a => a.id === appointmentId);
+    addNotification(
+      'Admission Check-In Verified',
+      `Patient ${targetAppt?.patientName || 'Patient'} has arrived and checked in via QR scan. Assigned ${queueNumber}.`,
+      'Success'
+    );
+  };
 
   // Handle hotkeys triggered from home desk
   React.useEffect(() => {
@@ -474,6 +499,16 @@ export default function AppointmentsView({
                 <span>Agenda List</span>
               </button>
             </div>
+
+            {/* Front Desk Optical QR Scanner Button */}
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md shadow-teal-600/20 hover:shadow-teal-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
+              id="front-desk-qr-scanner-btn"
+            >
+              <QrCode size={14} />
+              <span>Front Desk Scanner (Camera)</span>
+            </button>
 
             <button
               onClick={() => openBookingForDate(selectedDate)}
@@ -1371,6 +1406,22 @@ export default function AppointmentsView({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Front Desk Optical QR Scanner Modal */}
+      <FrontDeskQrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        appointments={appointments}
+        onCheckInAppointment={handleCheckInAppointment}
+      />
+
+      {/* Patient QR Code Check-In Pass Modal */}
+      <QrCodeCheckInModal
+        isOpen={!!selectedQrPassAppt}
+        onClose={() => setSelectedQrPassAppt(null)}
+        appointment={selectedQrPassAppt}
+        onSelfCheckIn={(id) => handleCheckInAppointment(id, 'Q-SELF')}
+      />
 
     </div>
   );

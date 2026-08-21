@@ -35,7 +35,8 @@ import {
   Info,
   CalendarCheck,
   Check,
-  Menu
+  Menu,
+  QrCode
 } from 'lucide-react';
 import { 
   Doctor, 
@@ -48,6 +49,7 @@ import {
   UserRole
 } from '../types';
 import ClinicLogo from './ClinicLogo';
+import QrCodeCheckInModal from './QrCodeCheckInModal';
 
 interface PublicHospitalViewProps {
   doctors: Doctor[];
@@ -139,10 +141,11 @@ export default function PublicHospitalView({
   });
   const [publicBookingDateError, setPublicBookingDateError] = useState('');
   const [bookingSuccessModal, setBookingSuccessModal] = useState<Appointment | null>(null);
+  const [qrModalAppt, setQrModalAppt] = useState<Appointment | null>(null);
 
   // Keyboard Escape listener to dismiss any open modals in PublicHospitalView
   useEffect(() => {
-    const isAnyModalOpen = isBookingModalOpen || !!bookingSuccessModal || !!selectedArticleModal || !!selectedDeptModal;
+    const isAnyModalOpen = isBookingModalOpen || !!bookingSuccessModal || !!selectedArticleModal || !!selectedDeptModal || !!qrModalAppt;
     if (!isAnyModalOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -151,11 +154,12 @@ export default function PublicHospitalView({
         setBookingSuccessModal(null);
         setSelectedArticleModal(null);
         setSelectedDeptModal(null);
+        setQrModalAppt(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBookingModalOpen, bookingSuccessModal, selectedArticleModal, selectedDeptModal]);
+  }, [isBookingModalOpen, bookingSuccessModal, selectedArticleModal, selectedDeptModal, qrModalAppt]);
 
   // Current Patient Object in Portal
   const activePortalPatient = patients.find(p => p.id === selectedPortalPatientId) || patients[0];
@@ -456,62 +460,74 @@ export default function PublicHospitalView({
           </div>
         </div>
 
-        {/* Mobile Navigation Dropdown Accordion */}
+        {/* Mobile Navigation Dropdown Accordion with Backdrop */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-1 shadow-xl overflow-hidden"
-            >
-              {[
-                { id: 'home', label: 'Home' },
-                { id: 'departments', label: 'Centers of Excellence' },
-                { id: 'doctors', label: 'Find a Doctor' },
-                { id: 'symptom-checker', label: 'Symptom Checker', icon: Sparkles },
-                { id: 'patient-portal', label: 'MyChart Patient Portal', icon: UserCheck },
-                { id: 'visitor-guide', label: 'Patients & Visitors' },
-                { id: 'health-library', label: 'Health Library' },
-              ].map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.id;
-                return (
+            <>
+              {/* Backdrop to close menu when tapping outside */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="fixed inset-0 z-20 bg-black/40 dark:bg-black/60 backdrop-blur-xs lg:hidden"
+                aria-label="Close menu overlay"
+              />
+
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="relative z-30 lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-1.5 shadow-xl overflow-hidden"
+              >
+                {[
+                  { id: 'home', label: 'Home' },
+                  { id: 'departments', label: 'Centers of Excellence' },
+                  { id: 'doctors', label: 'Find a Doctor' },
+                  { id: 'symptom-checker', label: 'Symptom Checker', icon: Sparkles },
+                  { id: 'patient-portal', label: 'MyChart Patient Portal', icon: UserCheck },
+                  { id: 'visitor-guide', label: 'Patients & Visitors' },
+                  { id: 'health-library', label: 'Health Library' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveSection(item.id as any);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 min-h-[44px] rounded-xl text-xs font-semibold transition-all text-left cursor-pointer ${
+                        isActive
+                          ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold border border-teal-200 dark:border-teal-900/40'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {Icon && <Icon size={16} className="text-teal-600 dark:text-teal-400" />}
+                        <span>{item.label}</span>
+                      </div>
+                      <ChevronRight size={15} className="text-slate-400" />
+                    </button>
+                  );
+                })}
+                
+                <div className="pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800">
                   <button
-                    key={item.id}
                     onClick={() => {
-                      setActiveSection(item.id as any);
+                      onSwitchToEhr();
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
-                      isActive
-                        ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold border border-teal-200 dark:border-teal-900/40'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
+                    className="w-full flex items-center justify-center gap-2 py-3 min-h-[44px] rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-teal-600 text-white text-xs font-bold shadow cursor-pointer transition-colors"
                   >
-                    <div className="flex items-center gap-2">
-                      {Icon && <Icon size={14} className="text-teal-600 dark:text-teal-400" />}
-                      <span>{item.label}</span>
-                    </div>
-                    <ChevronRight size={14} className="text-slate-400" />
+                    <Stethoscope size={15} className="text-teal-400" />
+                    <span>Switch to Staff EMR Operations &rarr;</span>
                   </button>
-                );
-              })}
-              
-              <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  onClick={() => {
-                    onSwitchToEhr();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold shadow"
-                >
-                  <Stethoscope size={14} className="text-teal-400" />
-                  <span>Switch to Staff EMR Operations &rarr;</span>
-                </button>
-              </div>
-            </motion.div>
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </header>
@@ -1429,7 +1445,7 @@ export default function PublicHospitalView({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2">
+                      <div className="flex flex-wrap items-center gap-2 pt-2">
                         {appt.type === 'Telehealth Video' ? (
                           <button
                             onClick={() => onLaunchTelehealth(appt)}
@@ -1439,12 +1455,25 @@ export default function PublicHospitalView({
                             <span>Enter Virtual Waiting Room</span>
                           </button>
                         ) : (
-                          <button
-                            onClick={() => addNotification('Check-In Completed', `You are checked in for ${appt.doctorName}. Please take a seat in West Atrium.`, 'Success')}
-                            className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold text-xs transition-colors cursor-pointer"
-                          >
-                            Self Check-In (Arrival)
-                          </button>
+                          <>
+                            <button
+                              onClick={() => setQrModalAppt(appt)}
+                              className="flex-1 py-2 px-3 rounded-xl bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                              id={`appt-qr-btn-${appt.id}`}
+                            >
+                              <QrCode size={13} />
+                              <span>View Check-In QR Pass</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: 'Checked In' } : a));
+                                addNotification('Check-In Completed', `You are checked in for ${appt.doctorName}. Please take a seat in West Atrium.`, 'Success');
+                              }}
+                              className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold text-xs transition-colors cursor-pointer"
+                            >
+                              {appt.status === 'Checked In' ? 'Checked In' : 'Self Check-In'}
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -1978,12 +2007,25 @@ export default function PublicHospitalView({
                 <div>Type: {bookingSuccessModal.type}</div>
                 <div>Status: Confirmed & Synchronized with EMR</div>
               </div>
-              <button
-                onClick={() => setBookingSuccessModal(null)}
-                className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition-colors cursor-pointer"
-              >
-                Done
-              </button>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    const savedAppt = bookingSuccessModal;
+                    setBookingSuccessModal(null);
+                    setQrModalAppt(savedAppt);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <QrCode size={14} />
+                  <span>View Check-In QR Pass</span>
+                </button>
+                <button
+                  onClick={() => setBookingSuccessModal(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
@@ -2170,6 +2212,20 @@ export default function PublicHospitalView({
         </div>
       </footer>
 
+      {/* QR Code Check-In Pass Modal */}
+      <QrCodeCheckInModal
+        isOpen={!!qrModalAppt}
+        onClose={() => setQrModalAppt(null)}
+        appointment={qrModalAppt}
+        onSelfCheckIn={(apptId) => {
+          setAppointments(prev => prev.map(a => a.id === apptId ? { ...a, status: 'Checked In' } : a));
+          addNotification(
+            'Check-In Recorded', 
+            `Your check-in has been registered with St. Jude front desk reception.`, 
+            'Success'
+          );
+        }}
+      />
     </div>
   );
 }

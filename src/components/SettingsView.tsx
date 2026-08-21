@@ -9,9 +9,17 @@ import {
   ShieldAlert, 
   Check, 
   X,
-  Plus
+  Plus,
+  Volume2,
+  VolumeX,
+  Volume1,
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  Bell
 } from 'lucide-react';
 import { SystemLog, UserRole } from '../types';
+import { playClinicalAlertSound } from '../utils/audioAlerts';
 
 interface SettingsViewProps {
   systemLogs: SystemLog[];
@@ -21,6 +29,10 @@ interface SettingsViewProps {
   addNotification: (title: string, desc: string, type: 'Alert' | 'Success' | 'Info' | 'Schedule') => void;
   isSimulationEnabled: boolean;
   setIsSimulationEnabled: (val: boolean) => void;
+  soundAlertsEnabled?: boolean;
+  setSoundAlertsEnabled?: (val: boolean) => void;
+  soundVolume?: number;
+  setSoundVolume?: (val: number) => void;
 }
 
 export default function SettingsView({
@@ -31,8 +43,42 @@ export default function SettingsView({
   addNotification,
   isSimulationEnabled,
   setIsSimulationEnabled,
+  soundAlertsEnabled = true,
+  setSoundAlertsEnabled,
+  soundVolume = 0.28,
+  setSoundVolume
 }: SettingsViewProps) {
   const [logFilter, setLogFilter] = useState<'All' | 'Info' | 'Warning' | 'Error'>('All');
+  const [testingSoundType, setTestingSoundType] = useState<string | null>(null);
+
+  const handleTestSound = (type: 'Alert' | 'Success' | 'Info' | 'Schedule') => {
+    setTestingSoundType(type);
+    playClinicalAlertSound(type, true, soundVolume);
+    setTimeout(() => {
+      setTestingSoundType(null);
+    }, 600);
+  };
+
+  const handleToggleSound = () => {
+    if (setSoundAlertsEnabled) {
+      const nextState = !soundAlertsEnabled;
+      setSoundAlertsEnabled(nextState);
+      if (nextState) {
+        playClinicalAlertSound('Success', true, soundVolume);
+        addNotification(
+          'Clinical Audio Alerts Enabled',
+          'Harmonic alert acoustics active (IEC 60601-1-8 compliant).',
+          'Success'
+        );
+      } else {
+        addNotification(
+          'Clinical Silent Mode Activated',
+          'Acoustic alert alarms muted. Visual notifications and status lights remain active.',
+          'Info'
+        );
+      }
+    }
+  };
 
   // Filter System logs
   const filteredLogs = systemLogs.filter(log => {
@@ -62,8 +108,167 @@ export default function SettingsView({
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column 2 Cols: Keyboard Shortcuts & Security governance table */}
+        {/* Left Column 2 Cols: Audio Noise Governance, Keyboard Shortcuts & Security permissions */}
         <div className="lg:col-span-2 space-y-6">
+          
+          {/* Clinical Environment Acoustic & Notification Sound Control */}
+          <div className="p-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs" id="clinical-audio-settings-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg ${soundAlertsEnabled ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400' : 'bg-slate-100 dark:bg-slate-900 text-slate-400'}`}>
+                    {soundAlertsEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Clinical Notification Sounds & Noise Governance
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+                  Toggle audible chimes for critical triage alarms, admission events, and verified operations. Configured to comply with hospital noise abatement guidelines (IEC 60601-1-8).
+                </p>
+              </div>
+
+              {/* Master Sound Alert Toggle */}
+              <div className="flex items-center gap-3 shrink-0">
+                <span className={`text-xs font-bold ${soundAlertsEnabled ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400'}`}>
+                  {soundAlertsEnabled ? 'Acoustic Sounds ON' : 'Muted (Silent Mode)'}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={soundAlertsEnabled}
+                  onClick={handleToggleSound}
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    soundAlertsEnabled ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                  id="notification-sound-toggle-btn"
+                  title={soundAlertsEnabled ? "Disable notification sounds (Clinical Silent Mode)" : "Enable notification sounds"}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      soundAlertsEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Environmental Mode & Calibration Controls */}
+            <div className="pt-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Clinical Mode Description Box */}
+                <div className={`p-3.5 rounded-xl border transition-all ${
+                  soundAlertsEnabled 
+                    ? 'bg-teal-50/30 dark:bg-teal-950/20 border-teal-200/80 dark:border-teal-900/40 text-slate-700 dark:text-slate-300'
+                    : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 text-slate-500'
+                }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Volume1 size={14} className="text-teal-600 dark:text-teal-400" />
+                      Acoustic Alarm Profile
+                    </span>
+                    <span className={`text-[9.5px] font-mono font-black uppercase px-1.5 py-0.5 rounded ${
+                      soundAlertsEnabled ? 'bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                    }`}>
+                      {soundAlertsEnabled ? 'Active Ward' : 'Quiet Ward'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    {soundAlertsEnabled 
+                      ? 'Employs soft two-tone sinusoidal harmonic waves (880Hz / 740Hz) with gradual attack ramps to notify staff while preserving quiet patient recovery rooms.'
+                      : 'Silent Visual Mode active: Only screen badges and status banners will render. Ideal for night rounds and intensive care quiet zones.'}
+                  </p>
+                </div>
+
+                {/* Sound Output Level / Volume Presets */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      Volume Level Calibration
+                    </span>
+                    <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
+                      {soundAlertsEnabled ? `${Math.round((soundVolume || 0.28) * 100)}%` : '0% (Muted)'}
+                    </span>
+                  </div>
+                  
+                  {/* Volume Preset Selector Chips */}
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { label: 'Quiet (15%)', val: 0.15 },
+                      { label: 'Ward (28%)', val: 0.28 },
+                      { label: 'ICU (50%)', val: 0.50 }
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        disabled={!soundAlertsEnabled}
+                        onClick={() => {
+                          if (setSoundVolume) {
+                            setSoundVolume(preset.val);
+                            playClinicalAlertSound('Success', true, preset.val);
+                          }
+                        }}
+                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer border ${
+                          Math.abs((soundVolume || 0.28) - preset.val) < 0.05 && soundAlertsEnabled
+                            ? 'bg-teal-600 border-teal-600 text-white shadow-xs'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-teal-400 disabled:opacity-40 disabled:cursor-not-allowed'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Sound Calibration Test Buttons Bar */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  Interactive Sound Synthesizer Test:
+                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => handleTestSound('Alert')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      testingSoundType === 'Alert'
+                        ? 'bg-red-600 text-white border-red-600 scale-95'
+                        : 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900'
+                    }`}
+                    title="Test High-Priority Emergency Alarm Sound"
+                  >
+                    <AlertTriangle size={13} className={testingSoundType === 'Alert' ? 'animate-spin' : ''} />
+                    <span>Test Critical Alert</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleTestSound('Success')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      testingSoundType === 'Success'
+                        ? 'bg-emerald-600 text-white border-emerald-600 scale-95'
+                        : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900'
+                    }`}
+                    title="Test Clinical Verification Chime"
+                  >
+                    <CheckCircle2 size={13} />
+                    <span>Test Verification Chime</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleTestSound('Info')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      testingSoundType === 'Info'
+                        ? 'bg-sky-600 text-white border-sky-600 scale-95'
+                        : 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-900'
+                    }`}
+                    title="Test Gentle Info Blip"
+                  >
+                    <Bell size={13} />
+                    <span>Test Info Blip</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           {/* Permissions Matrix */}
           <div className="p-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
@@ -279,3 +484,4 @@ export default function SettingsView({
     </div>
   );
 }
+

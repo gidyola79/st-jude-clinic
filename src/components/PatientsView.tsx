@@ -20,10 +20,12 @@ import {
   Calendar, 
   Pill, 
   X, 
-  Clock 
+  Clock,
+  Eye
 } from 'lucide-react';
 import { Patient, MedicalRecord, Prescription, VitalsRecord, LabTest, UserRole } from '../types';
 import { savePatient, updatePatientRecord } from '../lib/dbService';
+import PatientQuickViewModal from './PatientQuickViewModal';
 
 interface PatientsViewProps {
   patients: Patient[];
@@ -47,6 +49,8 @@ export default function PatientsView({
   onOpenAiAssistant,
 }: PatientsViewProps) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [quickViewPatient, setQuickViewPatient] = useState<Patient | null>(null);
+  const [hoveredPatientId, setHoveredPatientId] = useState<string | null>(null);
   const [localSearch, setLocalSearch] = useState('');
   const [patientFilterMode, setPatientFilterMode] = useState<'All' | 'Admitted' | 'Outpatient'>('All');
   const [activePatientSubTab, setActivePatientSubTab] = useState<'overview' | 'vitals' | 'labs' | 'history'>('overview');
@@ -755,57 +759,143 @@ export default function PatientsView({
 
           {/* Patients List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPatients.map(pat => (
-              <div
-                key={pat.id}
-                id={`patient-card-${pat.id}`}
-                onClick={() => setSelectedPatientId(pat.id)}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-blue-400 dark:hover:border-blue-600 transition-all cursor-pointer space-y-3"
-              >
-                <div className="flex items-center justify-between gap-2 min-w-0">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={pat.photo}
-                      alt={pat.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{pat.name}</h4>
-                      <p className="text-xs text-slate-500 truncate">{pat.gender}, {pat.age} yrs • Blood: <span className="font-bold text-red-600">{pat.bloodType}</span></p>
+            {filteredPatients.map(pat => {
+              const latestNote = pat.history && pat.history.length > 0 ? pat.history[0] : null;
+              const isHovered = hoveredPatientId === pat.id;
+
+              return (
+                <div
+                  key={pat.id}
+                  id={`patient-card-${pat.id}`}
+                  onClick={() => setSelectedPatientId(pat.id)}
+                  className="relative p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition-all cursor-pointer space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div 
+                      className="flex items-center gap-3 min-w-0 group"
+                      onMouseEnter={() => setHoveredPatientId(pat.id)}
+                      onMouseLeave={() => setHoveredPatientId(null)}
+                    >
+                      <img
+                        src={pat.photo}
+                        alt={pat.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 group-hover:ring-2 group-hover:ring-teal-500 transition-all"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-base font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                            {pat.name}
+                          </h4>
+                          <span className="text-[10px] font-mono font-semibold text-slate-400">
+                            #{pat.id}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">
+                          {pat.gender}, {pat.age} yrs • Blood: <span className="font-bold text-red-600">{pat.bloodType}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full border shrink-0 whitespace-nowrap ${
+                        pat.status === 'Admitted'
+                          ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300'
+                          : 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300'
+                      }`}>
+                        {pat.status}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickViewPatient(pat);
+                        }}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/60 hover:text-teal-600 dark:hover:text-teal-400 text-[10px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
+                        title="Quick View Note Snippet"
+                        id={`quick-view-btn-${pat.id}`}
+                      >
+                        <Eye size={11} />
+                        <span>Quick View</span>
+                      </button>
                     </div>
                   </div>
 
-                  <span className={`px-2.5 py-1 text-xs font-bold rounded-full border shrink-0 whitespace-nowrap ${
-                    pat.status === 'Admitted'
-                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300'
-                      : 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300'
-                  }`}>
-                    {pat.status}
-                  </span>
-                </div>
+                  {/* Hover Quick-View Note Snippet Popover */}
+                  {isHovered && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute left-2 right-2 top-16 z-40 p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-teal-300 dark:border-teal-700 shadow-2xl space-y-2 text-xs animate-in fade-in zoom-in-95 duration-150"
+                    >
+                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-1">
+                          <FileText size={12} /> Recent Note Snippet
+                        </span>
+                        {latestNote && (
+                          <span className="text-[10px] text-slate-400 font-mono">{latestNote.date}</span>
+                        )}
+                      </div>
 
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs space-y-1">
-                  <div className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                    Condition: <span className="text-blue-600 dark:text-blue-400 font-bold">{pat.condition}</span>
+                      {latestNote ? (
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-slate-900 dark:text-white font-bold leading-tight">
+                            Diagnosis: <span className="text-teal-600 dark:text-teal-400 font-semibold">{latestNote.diagnosis}</span>
+                          </div>
+                          {latestNote.notes && (
+                            <p className="text-[10.5px] text-slate-600 dark:text-slate-300 line-clamp-2 italic bg-slate-50 dark:bg-slate-950/70 p-1.5 rounded-lg">
+                              "{latestNote.notes}"
+                            </p>
+                          )}
+                          <div className="text-[10px] text-slate-400 flex items-center justify-between pt-0.5">
+                            <span>Dr. {latestNote.doctor}</span>
+                            <span className="font-semibold text-blue-600 hover:underline">Click Quick View for more</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-slate-500 py-1">
+                          No prior clinical encounters logged. Condition: <strong className="text-slate-800 dark:text-slate-200">{pat.condition}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs space-y-1">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      Condition: <span className="text-blue-600 dark:text-blue-400 font-bold">{pat.condition}</span>
+                    </div>
+                    <div className="text-slate-500 truncate">Room: {pat.room}</div>
+                    <div className="text-slate-500 truncate">Insurance: {pat.insurance}</div>
                   </div>
-                  <div className="text-slate-500 truncate">Room: {pat.room}</div>
-                  <div className="text-slate-500 truncate">Insurance: {pat.insurance}</div>
-                </div>
 
-                <div className="flex items-center justify-between text-xs pt-1 text-slate-400">
-                  <span>{pat.history?.length || 0} Consult Encounters</span>
-                  <span className="font-bold text-blue-600 hover:underline">Open Chart →</span>
+                  <div className="flex items-center justify-between text-xs pt-1 text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <ClipboardList size={12} className="text-slate-400" />
+                      <span>{pat.history?.length || 0} Consult Encounters</span>
+                    </span>
+                    <span className="font-bold text-blue-600 hover:underline flex items-center gap-0.5">
+                      <span>Open Chart</span>
+                      <span>→</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
+      {/* Interactive Quick-View Modal */}
+      <PatientQuickViewModal
+        patient={quickViewPatient}
+        onClose={() => setQuickViewPatient(null)}
+        onOpenFullChart={(id) => setSelectedPatientId(id)}
+        onOpenAiAssistant={onOpenAiAssistant}
+      />
+
       {/* Modal: Register Patient */}
       {showAddPatientModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowAddPatientModal(false);
           }}
@@ -943,7 +1033,7 @@ export default function PatientsView({
       {/* Modal: Log Vitals */}
       {isAddVitalsOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsAddVitalsOpen(false);
           }}
@@ -1026,7 +1116,7 @@ export default function PatientsView({
       {/* Modal: Order Lab */}
       {isAddLabOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsAddLabOpen(false);
           }}
@@ -1097,7 +1187,7 @@ export default function PatientsView({
       {/* Modal: Printable Medical Summary */}
       {showPrintModal && activePat && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowPrintModal(false);
           }}

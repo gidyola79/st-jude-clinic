@@ -1,7 +1,9 @@
 {
   "name": "St. Jude Clinic",
   "description": "An advanced healthcare dashboard featuring doctor scheduling, patient electronic health records, custom analytics, and clinical operations management.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "camera"
+  ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

@@ -17,11 +17,14 @@ import {
   UserCheck, 
   Sparkles,
   ArrowLeft,
-  Hospital
+  Hospital,
+  ScanFace,
+  Camera
 } from 'lucide-react';
 import { StaffUser, UserRole } from '../types';
 import { signInStaff, signUpStaff, DEMO_STAFF_ACCOUNTS } from '../lib/authService';
 import ClinicLogo from './ClinicLogo';
+import BiometricAuthModal from './BiometricAuthModal';
 
 interface StaffAuthViewProps {
   onAuthSuccess: (user: StaffUser) => void;
@@ -39,6 +42,7 @@ export default function StaffAuthView({ onAuthSuccess, onReturnToPublic }: Staff
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
 
   // Quick fill demo credentials
   const handleQuickFill = (demo: typeof DEMO_STAFF_ACCOUNTS[0]) => {
@@ -87,7 +91,11 @@ export default function StaffAuthView({ onAuthSuccess, onReturnToPublic }: Staff
     } catch (err: any) {
       console.error('Staff authentication error:', err);
       let msg = 'Authentication failed. Please verify your credentials.';
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+      const raw = err?.message || String(err || '');
+
+      if (raw.includes('api-keys-are-not-supported') || raw.includes('API key') || raw.includes('principal')) {
+        msg = 'Invalid credentials or workstation authorization failed. Please check your password or select a verified staff role below.';
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
         msg = 'Invalid hospital email or security password. Please re-check or use quick-fill demo credentials below.';
       } else if (err.code === 'auth/user-not-found') {
         msg = 'No staff record found with this email. You can register this account using the "Register New Staff" tab.';
@@ -95,8 +103,8 @@ export default function StaffAuthView({ onAuthSuccess, onReturnToPublic }: Staff
         msg = 'A clinical staff profile with this email already exists. Please switch to Sign In.';
       } else if (err.code === 'auth/invalid-email') {
         msg = 'Please enter a valid email address format.';
-      } else if (err.message) {
-        msg = err.message;
+      } else if (raw && !raw.includes('Firebase: Error') && !raw.includes('https://')) {
+        msg = raw;
       }
       setErrorMessage(msg);
     } finally {
@@ -322,6 +330,29 @@ export default function StaffAuthView({ onAuthSuccess, onReturnToPublic }: Staff
                   </>
                 )}
               </button>
+
+              {/* Biometric High-Security Camera Login Option */}
+              {authMode === 'signin' && (
+                <div className="pt-2">
+                  <div className="relative flex py-1.5 items-center">
+                    <div className="flex-grow border-t border-slate-800"></div>
+                    <span className="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                      High-Security Alternative
+                    </span>
+                    <div className="flex-grow border-t border-slate-800"></div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsBiometricModalOpen(true)}
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-850 text-teal-400 hover:text-teal-300 border border-teal-500/40 hover:border-teal-400 font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-teal-500/5 group"
+                    id="staff-biometric-camera-login-btn"
+                  >
+                    <ScanFace size={16} className="text-teal-400 group-hover:scale-110 transition-transform" />
+                    <span>Biometric Face Verification (Camera API)</span>
+                  </button>
+                </div>
+              )}
             </form>
 
             {/* Quick Demo Credentials Autofill Section */}
@@ -386,6 +417,20 @@ export default function StaffAuthView({ onAuthSuccess, onReturnToPublic }: Staff
       <footer className="relative z-10 py-3 px-6 text-center text-[10px] text-slate-600 border-t border-slate-800/60 bg-slate-950/40">
         St. Jude Memorial Health System • Cloud EMR v4.2 • Secured with Firebase Identity Platform
       </footer>
+
+      {/* Biometric Camera Authentication Modal */}
+      <BiometricAuthModal
+        isOpen={isBiometricModalOpen}
+        onClose={() => setIsBiometricModalOpen(false)}
+        onBiometricSuccess={(staff) => {
+          setIsBiometricModalOpen(false);
+          setSuccessMessage(`Biometric Face Scan verified for ${staff.displayName} (${staff.role}). Initializing EMR...`);
+          setTimeout(() => {
+            onAuthSuccess(staff);
+          }, 400);
+        }}
+        selectedStaffEmail={email}
+      />
     </div>
   );
 }

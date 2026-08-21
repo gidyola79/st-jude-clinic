@@ -1409,6 +1409,8 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     type: 'Success',
     isRead: false,
     targetAudience: 'staff',
+    createdAt: Date.now() - 5 * 60 * 1000,
+    archived: false,
   },
   {
     id: 'N2',
@@ -1418,6 +1420,8 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     type: 'Alert',
     isRead: false,
     targetAudience: 'staff',
+    createdAt: Date.now() - 18 * 60 * 1000,
+    archived: false,
   },
   {
     id: 'N3',
@@ -1427,6 +1431,8 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     type: 'Info',
     isRead: false,
     targetAudience: 'staff',
+    createdAt: Date.now() - 42 * 60 * 1000,
+    archived: false,
   },
   {
     id: 'N4',
@@ -1436,6 +1442,8 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     type: 'Success',
     isRead: true,
     targetAudience: 'admin',
+    createdAt: Date.now() - 60 * 60 * 1000,
+    archived: false,
   },
   {
     id: 'N5',
@@ -1445,6 +1453,30 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     type: 'Schedule',
     isRead: true,
     targetAudience: 'staff',
+    createdAt: Date.now() - 2 * 60 * 60 * 1000,
+    archived: false,
+  },
+  {
+    id: 'N6',
+    title: 'Scheduled System Maintenance Completed',
+    description: 'Central PACS imaging server firmware patch applied successfully with zero downtime.',
+    time: '28 hours ago',
+    type: 'Info',
+    isRead: true,
+    targetAudience: 'admin',
+    createdAt: Date.now() - 28 * 60 * 60 * 1000,
+    archived: false,
+  },
+  {
+    id: 'N7',
+    title: 'Resolved Alarm: O2 Tank Pressure Normal',
+    description: 'Secondary liquid oxygen backup manifold pressure re-stabilized to 55 PSI.',
+    time: '2 days ago',
+    type: 'Alert',
+    isRead: true,
+    targetAudience: 'staff',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    archived: false,
   }
 ];
 

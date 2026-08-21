@@ -18,10 +18,10 @@ import {
 import { getAuth, type Auth } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-// Initialize Firebase App singleton with configurable API key
+// Initialize Firebase App singleton with active or environment API key
 const activeApiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_API_KEY)
   ? import.meta.env.VITE_FIREBASE_API_KEY
-  : (firebaseConfig.apiKey || 'AIzaSy_CONFIGURED_AT_DEPLOYMENT');
+  : (firebaseConfig.apiKey || '');
 
 const runtimeConfig = {
   ...firebaseConfig,
@@ -32,10 +32,19 @@ const app = !getApps().length ? initializeApp(runtimeConfig) : getApp();
 
 const targetDatabaseId = (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId;
 
-// Initialize Firestore
-export const db: Firestore = targetDatabaseId 
-  ? getFirestore(app, targetDatabaseId) 
-  : getFirestore(app);
+// Initialize Firestore singleton
+let firestoreInstance: Firestore;
+try {
+  firestoreInstance = targetDatabaseId 
+    ? getFirestore(app, targetDatabaseId) 
+    : getFirestore(app);
+} catch {
+  firestoreInstance = targetDatabaseId
+    ? initializeFirestore(app, { ignoreUndefinedProperties: true }, targetDatabaseId)
+    : initializeFirestore(app, { ignoreUndefinedProperties: true });
+}
+
+export const db: Firestore = firestoreInstance;
 
 export const auth: Auth = getAuth(app);
 
@@ -65,3 +74,4 @@ export {
   orderBy,
   serverTimestamp
 };
+
