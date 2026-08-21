@@ -579,10 +579,10 @@ export default function App() {
   const pendingClaimsCount = claims.filter(c => c.status === 'Submitted' || c.status === 'In Review').length;
 
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-250 font-sans flex flex-col">
+    <div className="min-h-screen w-full overflow-x-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-250 font-sans flex flex-col">
       {/* If in Public Portal Mode, render the comprehensive St. Jude Public Hospital Website & MyChart Experience */}
       {appMode === 'public' ? (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
           {/* Top Global Navigation with quick toggle to Staff EMR */}
           <Header
             appMode={appMode}
@@ -627,7 +627,7 @@ export default function App() {
         />
       ) : (
         /* Authenticated Staff Clinical Operations EMR Mode */
-        <div className="flex h-screen w-screen overflow-hidden">
+        <div className="flex h-screen w-full min-w-0 overflow-hidden">
           {/* Sidebar Navigation */}
           <Sidebar
             activeTab={activeTab}
@@ -649,7 +649,7 @@ export default function App() {
           />
 
           {/* Main Container */}
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
+          <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
             
             {/* Sticky Global Header */}
             <Header
@@ -688,7 +688,7 @@ export default function App() {
 
             {/* Doctor Context Ribbon */}
             {activeRole === 'Doctor' && (
-              <div className="bg-indigo-600 text-white py-2 px-4 sm:px-6 text-xs flex flex-wrap gap-2 justify-between items-center shrink-0 border-b border-indigo-700 shadow-xs z-10 font-sans tracking-wide">
+              <div className="bg-indigo-600 text-white py-2 px-3 sm:px-6 text-xs flex flex-wrap gap-2 justify-between items-center shrink-0 border-b border-indigo-700 shadow-xs z-10 font-sans tracking-wide">
                 <span className="flex items-center gap-2 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping shrink-0" />
                   <span className="truncate">ACTING AS: <strong className="font-extrabold tracking-tight">{selectActingDoctorStr}</strong> (Specialty On Duty)</span>
@@ -713,8 +713,8 @@ export default function App() {
             )}
 
             {/* Content Body Pane */}
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 md:pb-6 bg-slate-50/70 dark:bg-slate-900/40">
-              <div className="max-w-7xl mx-auto h-full">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-6 pb-20 md:pb-6 bg-slate-50/70 dark:bg-slate-900/40">
+              <div className="max-w-7xl mx-auto w-full min-w-0">
                 
                 {activeTab === 'dashboard' && (
                   <AccessControl

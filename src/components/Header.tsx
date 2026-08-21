@@ -204,20 +204,20 @@ export default function Header({
   const todayStr = 'Thursday, May 21, 2026';
 
   return (
-    <header className="sticky top-0 h-16 w-full flex items-center justify-between px-4 sm:px-6 z-30 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors duration-250 select-none">
+    <header className="sticky top-0 h-16 w-full flex items-center justify-between px-3 sm:px-4 lg:px-6 z-30 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors duration-250 select-none overflow-hidden max-w-full">
       
-      {/* Left Area: Mobile Hamburger Button & Search Bar */}
-      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-md" ref={searchContainerRef}>
+      {/* Left Area: Mobile Hamburger Button, Clinic Logo & Search Bar */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md" ref={searchContainerRef}>
         
         {/* Mobile Hamburger Button */}
         {onOpenMobileMenu && (
           <button
             onClick={onOpenMobileMenu}
-            className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 transition-colors shrink-0"
+            className="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 transition-colors shrink-0 cursor-pointer"
             title="Open Navigation Menu"
             id="mobile-nav-toggle-btn"
           >
-            <Menu size={20} />
+            <Menu size={18} />
           </button>
         )}
 
@@ -233,8 +233,8 @@ export default function Header({
           <ClinicLogo size="sm" showText={false} id="header-clinical-logo" />
         </div>
 
-        <div className="relative w-full max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+        <div className="relative w-full min-w-0">
+          <Search size={14} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 shrink-0" />
           <input
             type="text"
             placeholder="Search patients, doctors... [/]"
@@ -244,7 +244,7 @@ export default function Header({
               setShowSearchDropdown(true);
             }}
             onFocus={() => setShowSearchDropdown(true)}
-            className="w-full pl-8 sm:pl-9 pr-10 sm:pr-14 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-100 dark:focus:ring-teal-950/30 focus:border-teal-500 transition-all shadow-xs"
+            className="w-full pl-7 sm:pl-9 pr-8 sm:pr-14 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-100 dark:focus:ring-teal-950/30 focus:border-teal-500 transition-all shadow-xs"
             id="global-search-input"
             autoComplete="off"
           />
@@ -254,19 +254,19 @@ export default function Header({
                 setSearchTerm('');
                 setShowSearchDropdown(false);
               }}
-              className="absolute right-7 sm:right-8 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
+              className="absolute right-6 sm:right-8 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer"
               title="Clear search"
             >
               <X size={12} />
             </button>
           ) : null}
-          <kbd className="hidden sm:inline absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono px-1 rounded bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700 font-bold select-none cursor-pointer" onClick={() => document.getElementById('global-search-input')?.focus()}>
+          <kbd className="hidden sm:inline absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono px-1 rounded bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700 font-bold select-none cursor-pointer" onClick={() => document.getElementById('global-search-input')?.focus()}>
             /
           </kbd>
 
           {/* Interactive Search Results Dropdown Preview */}
           {showSearchDropdown && searchTerm.trim().length > 0 && (
-            <div className="absolute left-0 top-full mt-2 w-[340px] sm:w-[420px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl p-3 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100 max-h-[480px] overflow-y-auto scrollbar-thin">
+            <div className="absolute left-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[420px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl p-3 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100 max-h-[480px] overflow-y-auto scrollbar-thin">
               
               <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-100 dark:border-slate-800/80 mb-2">
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
@@ -486,11 +486,11 @@ export default function Header({
         </div>
       </div>
 
-      {/* Center Portal Switcher */}
-      <div className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-full border border-slate-200 dark:border-slate-800 shadow-xs shrink-0">
+      {/* Center Portal Switcher (Visible on extra large desktops, accessible via sidebar/menu on mobile/tablet) */}
+      <div className="hidden 2xl:flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-full border border-slate-200 dark:border-slate-800 shadow-xs shrink-0">
         <button
           onClick={() => setAppMode('public')}
-          className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             appMode === 'public'
               ? 'bg-teal-600 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -501,7 +501,7 @@ export default function Header({
         </button>
         <button
           onClick={() => setAppMode('emr')}
-          className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             appMode === 'emr'
               ? 'bg-teal-600 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -513,10 +513,10 @@ export default function Header({
       </div>
 
       {/* Meta Indicators & Actions */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 shrink-0">
         
         {/* Real-time Clock Widget */}
-        <div className="hidden xl:flex items-center gap-2 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-slate-950/40 text-[11px] font-sans text-slate-600 dark:text-slate-400 whitespace-nowrap">
+        <div className="hidden 2xl:flex items-center gap-2 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-slate-950/40 text-[11px] font-sans text-slate-600 dark:text-slate-400 whitespace-nowrap">
           <Clock size={12} className="text-teal-600 animate-pulse shrink-0" />
           <span className="font-semibold">{timeStr}</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
@@ -525,13 +525,13 @@ export default function Header({
 
         {/* Selected Role Tag (EMR Mode Only) */}
         {appMode === 'emr' && (
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs whitespace-nowrap">
+          <div className="hidden md:flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs whitespace-nowrap">
             <span className={`w-2 h-2 rounded-full shrink-0 ${
               activeRole === 'Admin' ? 'bg-red-500 animate-pulse' : 
               activeRole === 'Doctor' ? 'bg-indigo-500' : 'bg-emerald-500'
             }`} />
-            <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-600 dark:text-slate-300">
-              {activeRole} MODE
+            <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-700 dark:text-slate-300">
+              {activeRole}
             </span>
           </div>
         )}
@@ -541,13 +541,13 @@ export default function Header({
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-full transition-all relative cursor-pointer"
+              className="p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-full transition-all relative cursor-pointer"
               id="notification-bell-btn"
               title="System Alerts"
             >
-              <Bell size={18} />
+              <Bell size={17} />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-red-500 text-[8px] font-sans font-black text-white flex items-center justify-center shadow">
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-[8px] font-sans font-black text-white flex items-center justify-center shadow">
                   {unreadCount}
                 </span>
               )}
@@ -556,7 +556,7 @@ export default function Header({
             {/* Notifications Dropdown Panel */}
             {showNotifications && (
               <div 
-                className="absolute right-0 mt-3 w-80 sm:w-96 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl p-4 shadow-2xl z-50 text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-top-3 duration-200"
+                className="absolute right-0 mt-2 w-[calc(100vw-24px)] sm:w-96 max-w-[95vw] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl p-3.5 sm:p-4 shadow-2xl z-50 text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-top-3 duration-200"
                 id="notifications-tray"
               >
                 <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
@@ -658,12 +658,12 @@ export default function Header({
         {appMode === 'emr' && (
           <button
             onClick={onShowShortcutsHelp}
-            className="hidden sm:inline-flex p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer relative"
+            className="hidden xl:inline-flex p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer relative"
             title="Keyboard Shortcuts Hub"
             id="shortcuts-trigger-btn"
           >
-            <Keyboard size={18} />
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-teal-600 text-white border border-white dark:border-slate-900 flex items-center justify-center font-mono text-[8.5px] font-extrabold shadow animate-pulse">
+            <Keyboard size={17} />
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-teal-600 text-white border border-white dark:border-slate-900 flex items-center justify-center font-mono text-[8px] font-extrabold shadow">
               ?
             </span>
           </button>
@@ -672,18 +672,18 @@ export default function Header({
         {/* Theme Toggle Button */}
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer"
+          className="p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer"
           title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           id="darkmode-toggle-btn"
         >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {darkMode ? <Sun size={17} /> : <Moon size={17} />}
         </button>
 
         {/* Public Mode: Staff Portal Entry Button (When not logged in) */}
         {appMode === 'public' && !staffUser && (
           <button
             onClick={() => setAppMode('emr')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-teal-600 dark:hover:bg-teal-400 text-white dark:text-slate-950 hover:text-white dark:hover:text-slate-950 text-xs font-bold transition-all shadow-xs cursor-pointer ml-1"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-teal-600 dark:hover:bg-teal-400 text-white dark:text-slate-950 hover:text-white dark:hover:text-slate-950 text-xs font-bold transition-all shadow-xs cursor-pointer ml-1 whitespace-nowrap"
             title="Secure Clinical Staff & Admin Portal"
             id="public-staff-login-btn"
           >
@@ -696,12 +696,12 @@ export default function Header({
         {appMode === 'emr' && onSignOutStaff && (
           <button
             onClick={onSignOutStaff}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950 text-red-700 dark:text-red-300 text-xs font-bold transition-all cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950 text-red-700 dark:text-red-300 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
             title="Lock Clinical Workstation & Sign Out"
             id="lock-workstation-btn"
           >
             <LogOut size={13} />
-            <span className="hidden md:inline">Lock Station</span>
+            <span className="hidden xl:inline">Lock Station</span>
           </button>
         )}
 
@@ -714,15 +714,18 @@ export default function Header({
               title={`Active: ${staffUser?.displayName || activeRole} (${activeRole}). Click for security details.`}
               id="role-switcher-profile-btn"
             >
-              <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center text-teal-700 dark:text-teal-300 font-bold shadow-xs border border-teal-200 dark:border-teal-900/30 text-xs shrink-0">
+              <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center text-teal-700 dark:text-teal-300 font-bold shadow-xs border border-teal-200 dark:border-teal-900/30 text-xs shrink-0 relative">
                 {staffUser?.displayName ? staffUser.displayName.slice(0, 2).toUpperCase() : activeRole === 'Admin' ? 'AD' : activeRole === 'Doctor' ? 'MD' : 'RE'}
+                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 ${
+                  activeRole === 'Admin' ? 'bg-red-500' : activeRole === 'Doctor' ? 'bg-indigo-500' : 'bg-emerald-500'
+                }`} title={`Role: ${activeRole}`} />
               </div>
               {staffUser && (
                 <div className="hidden xl:flex flex-col text-left text-[11px] leading-tight pr-1">
-                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px]">
+                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[110px]">
                     {staffUser.displayName}
                   </span>
-                  <span className="text-[10px] text-slate-400 truncate max-w-[120px] font-mono">
+                  <span className="text-[10px] text-slate-400 truncate max-w-[110px] font-mono">
                     {staffUser.badgeNumber || staffUser.email}
                   </span>
                 </div>
@@ -731,7 +734,7 @@ export default function Header({
 
           {/* Role & Staff Account dropdown */}
           {showRoleMenu && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-slate-800 dark:text-slate-100 font-sans">
+            <div className="absolute right-0 top-full mt-2 w-72 max-w-[90vw] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-slate-800 dark:text-slate-100 font-sans">
               
               {/* Authenticated Staff Card */}
               {staffUser ? (

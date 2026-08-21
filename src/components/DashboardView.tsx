@@ -512,7 +512,7 @@ export default function DashboardView({
               {/* SVG Elements */}
               <svg 
                 viewBox="0 0 550 180" 
-                className="w-full h-4/5 select-none overflow-visible"
+                className="w-full h-4/5 select-none overflow-hidden"
                 id="visits-analytic-svg"
               >
                 {/* Gradients */}
