@@ -4,17 +4,122 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f766e" />
-    <!-- Cache-busted Favicon Links for Development & Vercel Production Deployments -->
-    <link id="dynamic-favicon-svg" rel="icon" type="image/svg+xml" href="/favicon.svg?v=2.0.1" />
-    <link id="dynamic-favicon-ico" rel="alternate icon" href="/favicon.ico?v=2.0.1" />
-    <link rel="apple-touch-icon" href="/favicon.svg?v=2.0.1" />
-    <title>St. Jude Clinic</title>
+
+    <!-- Primary SEO Meta Tags -->
+    <title>St. Jude Clinic — Premier Smart Hospital & Electronic Medical Center</title>
+    <meta name="title" content="St. Jude Clinic — Premier Smart Hospital & Electronic Medical Center" />
+    <meta name="description" content="St. Jude Clinic is an accredited tertiary healthcare center providing cardiology, neurology, oncology, pediatrics, 24/7 Level 1 emergency trauma care, telehealth, and AI clinical diagnostics." />
+    <meta name="keywords" content="St. Jude Clinic, Hospital, Healthcare, Cardiology, Neurology, Oncology, Emergency Medicine, Telehealth, Doctor Directory, Patient Portal, MyChart, Clinical AI" />
+    <meta name="author" content="St. Jude Medical Center" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://stjudeclinic.org/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://stjudeclinic.org/" />
+    <meta property="og:site_name" content="St. Jude Clinic" />
+    <meta property="og:title" content="St. Jude Clinic — Premier Smart Hospital & Electronic Medical Center" />
+    <meta property="og:description" content="Advanced healthcare, specialized clinical departments, emergency trauma triage, patient portal, and telehealth appointments." />
+    <meta property="og:image" content="/logo.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="St. Jude Clinic & Medical Center Emblem" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://stjudeclinic.org/" />
+    <meta name="twitter:title" content="St. Jude Clinic — Premier Smart Hospital & Electronic Medical Center" />
+    <meta name="twitter:description" content="Advanced healthcare, specialized clinical departments, emergency trauma triage, patient portal, and telehealth appointments." />
+    <meta name="twitter:image" content="/logo.jpg" />
+    <meta name="twitter:site" content="@StJudeClinic" />
+    <meta name="twitter:creator" content="@StJudeClinic" />
+
+    <!-- Structured Data: Schema.org MedicalClinic & Hospital -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "MedicalClinic",
+        "name": "St. Jude Clinic & Medical Center",
+        "alternateName": "St. Jude Smart Hospital",
+        "url": "https://stjudeclinic.org/",
+        "logo": "https://stjudeclinic.org/logo.jpg",
+        "image": "https://stjudeclinic.org/logo.jpg",
+        "description": "St. Jude Clinic is an accredited tertiary medical center providing world-class cardiology, neurology, oncology, pediatrics, Level 1 emergency trauma care, telehealth, and AI clinical diagnostics.",
+        "telephone": "+1-800-555-5833",
+        "emergencyTelephone": "+1-800-555-9111",
+        "priceRange": "$$",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "742 Healthcare Boulevard",
+          "addressLocality": "New York",
+          "addressRegion": "NY",
+          "postalCode": "10021",
+          "addressCountry": "US"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "40.7648",
+          "longitude": "-73.9556"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ],
+            "opens": "00:00",
+            "closes": "23:59"
+          }
+        ],
+        "medicalSpecialty": [
+          "Cardiovascular",
+          "Neurology",
+          "Oncology",
+          "Orthopedics",
+          "Pediatrics",
+          "Emergency",
+          "InternalMedicine"
+        ],
+        "availableService": [
+          {
+            "@type": "MedicalProcedure",
+            "name": "24/7 Level 1 Emergency Trauma Resuscitation"
+          },
+          {
+            "@type": "MedicalProcedure",
+            "name": "Telehealth Virtual Consultations"
+          },
+          {
+            "@type": "MedicalProcedure",
+            "name": "Specialist Outpatient Clinical Care"
+          },
+          {
+            "@type": "MedicalProcedure",
+            "name": "Inpatient Surgery & Intensive Care"
+          }
+        ]
+      }
+    </script>
+
+    <!-- Cache-busted Favicon Links for Development & Vercel Production Deployments (Exact St. Jude Clinic Logo) -->
+    <link id="dynamic-favicon-jpg" rel="icon" type="image/jpeg" href="/favicon.jpg?v=3.0.0" />
+    <link id="dynamic-favicon-png" rel="icon" type="image/png" href="/favicon.png?v=3.0.0" />
+    <link id="dynamic-favicon-svg" rel="icon" type="image/svg+xml" href="/favicon.svg?v=3.0.0" />
+    <link id="dynamic-favicon-ico" rel="shortcut icon" href="/favicon.ico?v=3.0.0" />
+    <link rel="apple-touch-icon" href="/favicon.jpg?v=3.0.0" />
     <script>
       // Force immediate cache-busting update for favicons across working and Vercel environments
       (function() {
         try {
           var updateFavicon = function() {
-            var timestamp = 'stjude-v' + (Date.now().toString().slice(0, 7));
+            var timestamp = 'stjude-emblem-' + (Date.now().toString().slice(0, 7));
             var links = document.querySelectorAll("link[rel*='icon']");
             links.forEach(function(link) {
               var baseHref = link.getAttribute('href').split('?')[0];

@@ -62,6 +62,97 @@ app.get('/api/system/status', (req, res) => {
   });
 });
 
+// Dynamic Search Engine XML Sitemap
+app.get('/sitemap.xml', (req, res) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.get('host') || 'stjudeclinic.org';
+  const baseUrl = `${protocol}://${host}`;
+  const currentDate = new Date().toISOString().split('T')[0];
+
+  const publicRoutes = [
+    { path: '', changefreq: 'daily', priority: '1.0' },
+    { path: '#doctors', changefreq: 'weekly', priority: '0.9' },
+    { path: '#departments', changefreq: 'weekly', priority: '0.9' },
+    { path: '#patient-portal', changefreq: 'daily', priority: '0.8' },
+    { path: '#telehealth', changefreq: 'weekly', priority: '0.8' },
+    { path: '#emergency', changefreq: 'monthly', priority: '0.9' },
+    { path: '#health-library', changefreq: 'daily', priority: '0.8' },
+    { path: '#visitor-guide', changefreq: 'monthly', priority: '0.7' },
+    { path: '#symptom-checker', changefreq: 'weekly', priority: '0.8' },
+    { path: '#contact', changefreq: 'monthly', priority: '0.8' }
+  ];
+
+  const depts = ['dept-cardio', 'dept-neuro', 'dept-onco', 'dept-ortho', 'dept-peds', 'dept-er'];
+  const articles = ['art-1', 'art-2', 'art-3', 'art-4'];
+  const doctors = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'];
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+  publicRoutes.forEach(r => {
+    const loc = r.path ? `${baseUrl}/${r.path}` : `${baseUrl}/`;
+    xml += `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${currentDate}</lastmod>\n    <changefreq>${r.changefreq}</changefreq>\n    <priority>${r.priority}</priority>\n  </url>\n`;
+  });
+
+  depts.forEach(d => {
+    xml += `  <url>\n    <loc>${baseUrl}/#department-${d}</loc>\n    <lastmod>${currentDate}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+  });
+
+  articles.forEach(a => {
+    xml += `  <url>\n    <loc>${baseUrl}/#article-${a}</loc>\n    <lastmod>${currentDate}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  });
+
+  doctors.forEach(doc => {
+    xml += `  <url>\n    <loc>${baseUrl}/#doctor-${doc}</loc>\n    <lastmod>${currentDate}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+  });
+
+  xml += `</urlset>`;
+  res.header('Content-Type', 'application/xml');
+  res.header('Cache-Control', 'public, max-age=86400');
+  res.send(xml);
+});
+
+// Dynamic Robots.txt Handler
+app.get('/robots.txt', (req, res) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.get('host') || 'stjudeclinic.org';
+  const baseUrl = `${protocol}://${host}`;
+
+  const robots = `# St. Jude Clinic Robots Policy
+User-agent: *
+Allow: /$
+Allow: /#doctors
+Allow: /#departments
+Allow: /#patient-portal
+Allow: /#telehealth
+Allow: /#emergency
+Allow: /#health-library
+Allow: /#visitor-guide
+Allow: /#symptom-checker
+Allow: /#contact
+Allow: /favicon.*
+Allow: /assets/
+Allow: /sitemap.xml
+
+# Protected EMR / Clinical / Private Health Data (HIPAA)
+Disallow: /api/
+Disallow: /emr/
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /patients/
+Disallow: /billing/
+Disallow: /pharmacy/
+Disallow: /triage/
+Disallow: /analytics/
+Disallow: /settings/
+Disallow: /session/
+
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+  res.header('Content-Type', 'text/plain');
+  res.header('Cache-Control', 'public, max-age=86400');
+  res.send(robots);
+});
+
 // AI Clinical Co-Pilot Endpoint
 app.post('/api/ai-clinical-assist', async (req, res) => {
   try {

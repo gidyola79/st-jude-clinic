@@ -1,0 +1,35 @@
+# ==========================================
+# St. Jude Medical Center & Clinic Robots File
+# Protocol: Robots Exclusion Standard (RFC 9309)
+# ==========================================
+
+User-agent: *
+
+# --- Allowed Public Hospital Directories ---
+Allow: /
+Allow: /favicon.*
+Allow: /logo.jpg
+Allow: /sitemap.xml
+Allow: /#departments
+Allow: /#doctors
+Allow: /#booking
+Allow: /#patient-portal
+Allow: /#telehealth
+Allow: /#health-articles
+Allow: /#visitor-guide
+Allow: /#emergency-guide
+
+# --- Disallow Protected EMR, Private Clinical & Staff API Routes ---
+Disallow: /api/
+Disallow: /app/
+Disallow: /emr/
+Disallow: /staff/
+Disallow: /admin/
+Disallow: /patient-records/
+Disallow: /triage/
+Disallow: /billing/
+Disallow: /pharmacy-inventory/
+Disallow: /shift-reports/
+
+# --- Search Engine Sitemap Directives ---
+Sitemap: https://stjude-clinic.vercel.app/sitemap.xml
