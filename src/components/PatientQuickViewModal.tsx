@@ -21,13 +21,15 @@ interface PatientQuickViewModalProps {
   onClose: () => void;
   onOpenFullChart: (patientId: string) => void;
   onOpenAiAssistant?: (patient: Patient) => void;
+  onOpenDischargeSummary?: (patient: Patient) => void;
 }
 
 export default function PatientQuickViewModal({
   patient,
   onClose,
   onOpenFullChart,
-  onOpenAiAssistant
+  onOpenAiAssistant,
+  onOpenDischargeSummary
 }: PatientQuickViewModalProps) {
   if (!patient) return null;
 
@@ -207,19 +209,34 @@ export default function PatientQuickViewModal({
         </div>
 
         {/* Modal Action Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-          {onOpenAiAssistant && (
-            <button
-              onClick={() => {
-                onClose();
-                onOpenAiAssistant(patient);
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition-colors cursor-pointer"
-            >
-              <Sparkles size={13} className="text-indigo-600" />
-              <span>AI Co-Pilot</span>
-            </button>
-          )}
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex-wrap">
+          <div className="flex items-center gap-2">
+            {onOpenAiAssistant && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenAiAssistant(patient);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition-colors cursor-pointer"
+              >
+                <Sparkles size={13} className="text-indigo-600" />
+                <span>AI Co-Pilot</span>
+              </button>
+            )}
+
+            {onOpenDischargeSummary && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenDischargeSummary(patient);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 transition-colors cursor-pointer"
+              >
+                <FileText size={13} className="text-teal-600" />
+                <span>AI Discharge Note</span>
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <button

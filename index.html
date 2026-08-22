@@ -3,12 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/favicon.jpg" />
+    <meta name="theme-color" content="#0f766e" />
+    <!-- Cache-busted Favicon Links for Development & Vercel Production Deployments -->
+    <link id="dynamic-favicon-svg" rel="icon" type="image/svg+xml" href="/favicon.svg?v=2.0.1" />
+    <link id="dynamic-favicon-ico" rel="alternate icon" href="/favicon.ico?v=2.0.1" />
+    <link rel="apple-touch-icon" href="/favicon.svg?v=2.0.1" />
     <title>St. Jude Clinic</title>
     <script>
+      // Force immediate cache-busting update for favicons across working and Vercel environments
+      (function() {
+        try {
+          var updateFavicon = function() {
+            var timestamp = 'stjude-v' + (Date.now().toString().slice(0, 7));
+            var links = document.querySelectorAll("link[rel*='icon']");
+            links.forEach(function(link) {
+              var baseHref = link.getAttribute('href').split('?')[0];
+              link.setAttribute('href', baseHref + '?v=' + timestamp);
+            });
+          };
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateFavicon);
+          } else {
+            updateFavicon();
+          }
+        } catch (e) {
+          // Ignore if error occurs
+        }
+      })();
+
       // Safeguard for environments where window.fetch has only a getter
       (function() {
         try {

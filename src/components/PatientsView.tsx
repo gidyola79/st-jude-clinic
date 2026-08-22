@@ -26,6 +26,7 @@ import {
 import { Patient, MedicalRecord, Prescription, VitalsRecord, LabTest, UserRole } from '../types';
 import { savePatient, updatePatientRecord } from '../lib/dbService';
 import PatientQuickViewModal from './PatientQuickViewModal';
+import DischargeSummaryModal from './DischargeSummaryModal';
 
 interface PatientsViewProps {
   patients: Patient[];
@@ -50,6 +51,7 @@ export default function PatientsView({
 }: PatientsViewProps) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [quickViewPatient, setQuickViewPatient] = useState<Patient | null>(null);
+  const [dischargeModalPatient, setDischargeModalPatient] = useState<Patient | null>(null);
   const [hoveredPatientId, setHoveredPatientId] = useState<string | null>(null);
   const [localSearch, setLocalSearch] = useState('');
   const [patientFilterMode, setPatientFilterMode] = useState<'All' | 'Admitted' | 'Outpatient'>('All');
@@ -104,7 +106,7 @@ export default function PatientsView({
 
   // Keyboard Escape listener to dismiss any open modals in PatientsView
   useEffect(() => {
-    const isAnyModalOpen = showAddPatientModal || isAddVitalsOpen || isAddLabOpen || showPrintModal;
+    const isAnyModalOpen = showAddPatientModal || isAddVitalsOpen || isAddLabOpen || showPrintModal || Boolean(dischargeModalPatient);
     if (!isAnyModalOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,11 +115,12 @@ export default function PatientsView({
         setIsAddVitalsOpen(false);
         setIsAddLabOpen(false);
         setShowPrintModal(false);
+        setDischargeModalPatient(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAddPatientModal, isAddVitalsOpen, isAddLabOpen, showPrintModal]);
+  }, [showAddPatientModal, isAddVitalsOpen, isAddLabOpen, showPrintModal, dischargeModalPatient]);
 
   // Search filter
   const filteredPatients = patients.filter((p) => {
@@ -302,6 +305,44 @@ export default function PatientsView({
     addNotification('Diagnostic Lab Ordered', `Requisition created for ${labTestName} (${labPriority}).`, 'Success');
   };
 
+  const handleSaveDischargeSummary = (patientId: string, summaryText: string, markDischarged?: boolean) => {
+    const targetPatient = patients.find(p => p.id === patientId);
+    if (!targetPatient) return;
+
+    const dischargeRecord: MedicalRecord = {
+      id: `REC-DS-${Date.now().toString().slice(-4)}`,
+      date: new Date().toISOString().substring(0, 10),
+      doctor: activeDoctorName || targetPatient.primaryDoctor || 'Dr. Robert Chen, MD',
+      department: 'Inpatient Internal Medicine',
+      diagnosis: `Clinical Discharge Summary: ${targetPatient.condition}`,
+      treatment: 'Hospital Inpatient Course Completed / Comprehensive Discharge Care Plan Issued',
+      notes: summaryText,
+      prescriptions: []
+    };
+
+    const updatedHistory = [dischargeRecord, ...(targetPatient.history || [])];
+    const updatedStatus = markDischarged ? 'Discharged' : targetPatient.status;
+
+    const updatedPatients = patients.map(p => p.id === patientId ? {
+      ...p,
+      history: updatedHistory,
+      status: updatedStatus as 'Admitted' | 'Outpatient' | 'Discharged'
+    } : p);
+
+    setPatients(updatedPatients);
+
+    updatePatientRecord(patientId, {
+      history: updatedHistory,
+      status: updatedStatus
+    }).catch(err => console.error('Failed to persist discharge summary:', err));
+
+    addNotification(
+      'Discharge Summary Archived',
+      `AI Discharge Summary recorded in EHR for ${targetPatient.name}${markDischarged ? ' (Patient marked as Discharged)' : ''}.`,
+      'Success'
+    );
+  };
+
   return (
     <div className="space-y-6 select-none animate-in fade-in duration-200">
       {/* Patient Detail Screen */}
@@ -317,7 +358,16 @@ export default function PatientsView({
               <span>Back to Patient Directory</span>
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                id="generate-discharge-summary-btn"
+                onClick={() => setDischargeModalPatient(activePat)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors shadow-xs"
+              >
+                <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <span>Generate Discharge Summary</span>
+              </button>
+
               {onOpenAiAssistant && (
                 <button
                   onClick={() => onOpenAiAssistant(activePat)}
@@ -805,19 +855,35 @@ export default function PatientsView({
                         {pat.status}
                       </span>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setQuickViewPatient(pat);
-                        }}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/60 hover:text-teal-600 dark:hover:text-teal-400 text-[10px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
-                        title="Quick View Note Snippet"
-                        id={`quick-view-btn-${pat.id}`}
-                      >
-                        <Eye size={11} />
-                        <span>Quick View</span>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDischargeModalPatient(pat);
+                          }}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950 hover:bg-teal-100 dark:hover:bg-teal-900/80 text-[10px] font-bold text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 transition-colors"
+                          title="Draft AI Discharge Summary"
+                          id={`discharge-summary-btn-${pat.id}`}
+                        >
+                          <Sparkles size={10} className="text-teal-600 dark:text-teal-400" />
+                          <span>AI Summary</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQuickViewPatient(pat);
+                          }}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/60 hover:text-teal-600 dark:hover:text-teal-400 text-[10px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
+                          title="Quick View Note Snippet"
+                          id={`quick-view-btn-${pat.id}`}
+                        >
+                          <Eye size={11} />
+                          <span>Quick View</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -890,6 +956,7 @@ export default function PatientsView({
         onClose={() => setQuickViewPatient(null)}
         onOpenFullChart={(id) => setSelectedPatientId(id)}
         onOpenAiAssistant={onOpenAiAssistant}
+        onOpenDischargeSummary={(pat) => setDischargeModalPatient(pat)}
       />
 
       {/* Modal: Register Patient */}
@@ -1256,6 +1323,14 @@ export default function PatientsView({
           </div>
         </div>
       )}
+
+      {/* AI Discharge Summary Generator Modal */}
+      <DischargeSummaryModal
+        isOpen={Boolean(dischargeModalPatient)}
+        onClose={() => setDischargeModalPatient(null)}
+        patient={dischargeModalPatient}
+        onSaveSummaryToRecords={handleSaveDischargeSummary}
+      />
     </div>
   );
 }

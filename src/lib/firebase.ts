@@ -5,6 +5,8 @@ import {
   collection, 
   doc, 
   getDocs, 
+  getDoc,
+  getDocFromServer,
   setDoc, 
   addDoc, 
   updateDoc, 
@@ -32,21 +34,87 @@ const app = !getApps().length ? initializeApp(runtimeConfig) : getApp();
 
 const targetDatabaseId = (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId;
 
-// Initialize Firestore singleton
+// Initialize Firestore singleton with auto-detect long polling for web/sandboxed proxy stability
 let firestoreInstance: Firestore;
 try {
   firestoreInstance = targetDatabaseId 
+    ? initializeFirestore(app, { 
+        experimentalAutoDetectLongPolling: true,
+        ignoreUndefinedProperties: true 
+      }, targetDatabaseId)
+    : initializeFirestore(app, { 
+        experimentalAutoDetectLongPolling: true,
+        ignoreUndefinedProperties: true 
+      });
+} catch {
+  firestoreInstance = targetDatabaseId 
     ? getFirestore(app, targetDatabaseId) 
     : getFirestore(app);
-} catch {
-  firestoreInstance = targetDatabaseId
-    ? initializeFirestore(app, { ignoreUndefinedProperties: true }, targetDatabaseId)
-    : initializeFirestore(app, { ignoreUndefinedProperties: true });
 }
 
 export const db: Firestore = firestoreInstance;
 
 export const auth: Auth = getAuth(app);
+
+// Validate Connection to Firestore (as mandated by firebase skill)
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.info("Firestore operating in offline client mode until backend stream synchronizes.");
+    }
+  }
+}
+testConnection();
+
+// Structured Firestore error handling
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 // Collection Names
 export const COLLECTIONS = {
@@ -65,6 +133,8 @@ export {
   collection,
   doc,
   getDocs,
+  getDoc,
+  getDocFromServer,
   setDoc,
   addDoc,
   updateDoc,
