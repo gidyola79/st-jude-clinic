@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Bell, 
   Search, 
@@ -578,15 +579,50 @@ export default function Header({
             </button>
           )}
 
-          {/* Theme Toggle Button */}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center"
-            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            id="darkmode-toggle-btn"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          {/* Floating Global Dark Mode Toggle Pill */}
+          <div className="relative flex items-center">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="relative flex items-center gap-1.5 p-1 px-2 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-teal-400 dark:hover:border-teal-500 transition-all duration-200 cursor-pointer min-h-[36px] select-none group"
+              title={darkMode ? "Switch to Light Mode (Global)" : "Switch to Dark Mode (Global)"}
+              id="floating-darkmode-toggle-btn"
+              aria-label={darkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
+            >
+              {/* Smooth Animated Icon Transition Container */}
+              <div className="relative w-6 h-6 flex items-center justify-center overflow-hidden">
+                <AnimatePresence mode="wait" initial={false}>
+                  {darkMode ? (
+                    <motion.div
+                      key="moon-icon"
+                      initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                      animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                      exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-indigo-400 shadow-sm"
+                    >
+                      <Moon size={14} className="text-indigo-400" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun-icon"
+                      initial={{ rotate: 90, scale: 0.5, opacity: 0 }}
+                      animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                      exit={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-amber-500 shadow-sm"
+                    >
+                      <Sun size={14} className="text-amber-500" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Compact Mode Label on Screens */}
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 pr-0.5 tracking-tight min-w-[28px] text-left">
+                {darkMode ? 'Dark' : 'Light'}
+              </span>
+            </button>
+          </div>
 
           {/* Public Mode: Staff Portal Entry Button (When not logged in) */}
           {appMode === 'public' && !staffUser && (

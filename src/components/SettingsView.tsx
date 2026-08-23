@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { SystemLog, UserRole } from '../types';
 import { playClinicalAlertSound } from '../utils/audioAlerts';
+import ConfirmationModal from './ConfirmationModal';
 
 interface SettingsViewProps {
   systemLogs: SystemLog[];
@@ -50,6 +51,10 @@ export default function SettingsView({
 }: SettingsViewProps) {
   const [logFilter, setLogFilter] = useState<'All' | 'Info' | 'Warning' | 'Error'>('All');
   const [testingSoundType, setTestingSoundType] = useState<string | null>(null);
+  
+  // Destructive Confirmation States
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isClearLogsConfirmOpen, setIsClearLogsConfirmOpen] = useState(false);
 
   const handleTestSound = (type: 'Alert' | 'Success' | 'Info' | 'Schedule') => {
     setTestingSoundType(type);
@@ -414,7 +419,7 @@ export default function SettingsView({
               </button>
 
               <button
-                onClick={onResetDatabase}
+                onClick={() => setIsResetConfirmOpen(true)}
                 className="w-full text-center py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-extrabold rounded-lg shadow cursor-pointer flex items-center justify-center gap-1.5"
                 id="reset-db-btn"
               >
@@ -468,8 +473,9 @@ export default function SettingsView({
             {filteredLogs.length > 0 && (
               <div className="flex justify-end pt-2">
                 <button
-                  onClick={clearSystemLogs}
-                  className="text-[10px] text-slate-400 hover:text-slate-500 underline cursor-pointer"
+                  onClick={() => setIsClearLogsConfirmOpen(true)}
+                  className="text-[10px] text-slate-400 hover:text-rose-500 underline cursor-pointer"
+                  id="clear-logs-btn"
                 >
                   Clear logs cache
                 </button>
@@ -480,6 +486,50 @@ export default function SettingsView({
         </div>
 
       </div>
+
+      {/* Hard Reset Clinical Database Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirm={() => {
+          onResetDatabase();
+          setIsResetConfirmOpen(false);
+        }}
+        title="Hard Reset Hospital Databases"
+        description="WARNING: This operation will completely purge all active patient electronic health records, outpatient schedule bookings, inpatient bed allocations, and pharmacy warehouse stock levels, restoring factory default clinical templates."
+        confirmText="Hard Reset Databases"
+        cancelText="Cancel & Keep Data"
+        variant="danger"
+        iconType="reset"
+        requireTypingConfirmation="RESET"
+        destructiveImpactNotice="All local modifications and active telemetry streams will be irrevocably deleted across all hospital departmental workstations."
+        itemDetails={[
+          { label: 'Operator Role', value: activeRole },
+          { label: 'Target Datastores', value: 'EHR, Rx, Beds, Billing, Logs' },
+          { label: 'Security Level', value: 'HIPAA Critical Wipe' }
+        ]}
+      />
+
+      {/* Clear Logs Cache Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isClearLogsConfirmOpen}
+        onClose={() => setIsClearLogsConfirmOpen(false)}
+        onConfirm={() => {
+          clearSystemLogs();
+          setIsClearLogsConfirmOpen(false);
+        }}
+        title="Purge System Telemetry & Audit Logs"
+        description="Are you sure you want to clear the workstation telemetry and audit log history? Recent operational events will be cleared from memory."
+        confirmText="Purge Logs Cache"
+        cancelText="Keep Logs"
+        variant="warning"
+        iconType="trash"
+        destructiveImpactNotice="Workstation event history will be cleared. Background telemetry services will continue recording new events."
+        itemDetails={[
+          { label: 'Total Logs', value: `${systemLogs.length} events` },
+          { label: 'Current Filter', value: logFilter }
+        ]}
+      />
 
     </div>
   );

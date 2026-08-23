@@ -31,6 +31,7 @@ import { Appointment, Doctor, Patient, UserRole } from '../types';
 import { saveAppointment, updateAppointmentRecord } from '../lib/dbService';
 import FrontDeskQrScannerModal from './FrontDeskQrScannerModal';
 import QrCodeCheckInModal from './QrCodeCheckInModal';
+import ConfirmationModal from './ConfirmationModal';
 
 interface AppointmentsViewProps {
   appointments: Appointment[];
@@ -104,6 +105,9 @@ export default function AppointmentsView({
   
   // Day Inspection Drawer / Popover
   const [inspectingDate, setInspectingDate] = useState<string | null>(null);
+  
+  // Destructive Confirmation Modal for Voiding Appointments
+  const [cancellingAppointment, setCancellingAppointment] = useState<Appointment | null>(null);
   
   // Front Desk Optical QR Scanner & Patient Pass Modals
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -903,14 +907,15 @@ export default function AppointmentsView({
                         {appt.status === 'Scheduled' && (
                           <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">
                             <button
-                              onClick={() => changeStatus(appt.id, 'Cancelled')}
-                              className="px-2 py-1 text-[10px] text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded border border-rose-200 dark:border-rose-900/50 font-bold transition-colors"
+                              onClick={() => setCancellingAppointment(appt)}
+                              className="px-2 py-1 text-[10px] text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded border border-rose-200 dark:border-rose-900/50 font-bold transition-colors cursor-pointer"
+                              id={`void-appt-daypop-${appt.id}`}
                             >
                               Void Slot
                             </button>
                             <button
                               onClick={() => changeStatus(appt.id, 'Completed')}
-                              className="px-3 py-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-xs transition-colors flex items-center gap-1"
+                              className="px-3 py-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
                             >
                               <Check size={11} />
                               Check-In
@@ -1023,15 +1028,16 @@ export default function AppointmentsView({
                           {isScheduled && (
                             <div className="flex gap-1">
                               <button
-                                onClick={() => changeStatus(appt.id, 'Cancelled')}
-                                className="p-1 px-2 text-[10px] bg-rose-50/20 hover:bg-rose-50 dark:hover:bg-rose-950/20 border border-slate-200 dark:border-slate-800 rounded select-none text-rose-500 hover:text-rose-600 transition-colors"
+                                onClick={() => setCancellingAppointment(appt)}
+                                className="p-1 px-2 text-[10px] bg-rose-50/20 hover:bg-rose-50 dark:hover:bg-rose-950/20 border border-slate-200 dark:border-slate-800 rounded select-none text-rose-500 hover:text-rose-600 transition-colors cursor-pointer"
                                 title="Cancel Session"
+                                id={`void-appt-day-${appt.id}`}
                               >
                                 Void
                               </button>
                               <button
                                 onClick={() => changeStatus(appt.id, 'Completed')}
-                                className="p-1 px-3 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white rounded select-none shadow-xs font-bold transition-all flex items-center gap-1"
+                                className="p-1 px-3 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white rounded select-none shadow-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                                 title="Mark Checkin Complete"
                               >
                                 <Check size={11} />
@@ -1154,12 +1160,21 @@ export default function AppointmentsView({
                         {appt.status}
                       </span>
                       {appt.status === 'Scheduled' && (
-                        <button
-                          onClick={() => changeStatus(appt.id, 'Completed')}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition-colors"
-                        >
-                          Check-In
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setCancellingAppointment(appt)}
+                            className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded border border-rose-200 dark:border-rose-900/50 text-xs font-bold transition-colors cursor-pointer"
+                            id={`void-appt-list-${appt.id}`}
+                          >
+                            Void
+                          </button>
+                          <button
+                            onClick={() => changeStatus(appt.id, 'Completed')}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            Check-In
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1422,6 +1437,35 @@ export default function AppointmentsView({
         appointment={selectedQrPassAppt}
         onSelfCheckIn={(id) => handleCheckInAppointment(id, 'Q-SELF')}
       />
+
+      {/* Confirmation Dialog for Destructive Appointment Voiding */}
+      {cancellingAppointment && (
+        <ConfirmationModal
+          isOpen={!!cancellingAppointment}
+          onClose={() => setCancellingAppointment(null)}
+          onConfirm={() => {
+            if (cancellingAppointment) {
+              changeStatus(cancellingAppointment.id, 'Cancelled');
+              setCancellingAppointment(null);
+            }
+          }}
+          title="Cancel Clinical Appointment"
+          description="Are you sure you want to void this scheduled outpatient appointment? This will mark the consultation as Cancelled in the EHR schedule and update the clinician workload."
+          confirmText="Void Appointment"
+          cancelText="Keep Appointment"
+          variant="danger"
+          iconType="appointment"
+          destructiveImpactNotice="Voiding this consultation slot frees the physician's schedule but archives the appointment as cancelled in HIPAA audit logs."
+          itemDetails={[
+            { label: 'Patient', value: cancellingAppointment.patientName },
+            { label: 'Physician', value: cancellingAppointment.doctorName },
+            { label: 'Specialty', value: cancellingAppointment.specialty },
+            { label: 'Date', value: cancellingAppointment.date },
+            { label: 'Time', value: cancellingAppointment.time },
+            { label: 'Type', value: cancellingAppointment.type }
+          ]}
+        />
+      )}
 
     </div>
   );

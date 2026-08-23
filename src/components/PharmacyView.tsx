@@ -19,6 +19,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { Medicine, PrescriptionOrder, Patient, UserRole } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 
 interface PharmacyViewProps {
   medicines: Medicine[];
@@ -68,6 +69,9 @@ export default function PharmacyView({
 
   // Dispensing View / Label Print Modal
   const [viewPrescription, setViewPrescription] = useState<PrescriptionOrder | null>(null);
+  
+  // Destructive/Critical Action Confirmation: Dispense Prescription
+  const [dispensingOrder, setDispensingOrder] = useState<PrescriptionOrder | null>(null);
 
   // Keyboard Escape listener to dismiss any open modals in PharmacyView
   useEffect(() => {
@@ -405,8 +409,8 @@ export default function PharmacyView({
                       {isPending && (
                         <button
                           id={`dispense-btn-${order.id}`}
-                          onClick={() => handleDispenseOrder(order.id)}
-                          className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-lg shadow flex items-center gap-1.5 transition-colors"
+                          onClick={() => setDispensingOrder(order)}
+                          className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-lg shadow flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <CheckCircle2 className="w-4 h-4" />
                           <span>Dispense Medication</span>
@@ -780,6 +784,34 @@ export default function PharmacyView({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Critical Confirmation Dialog for Dispensing Prescription */}
+      {dispensingOrder && (
+        <ConfirmationModal
+          isOpen={!!dispensingOrder}
+          onClose={() => setDispensingOrder(null)}
+          onConfirm={() => {
+            if (dispensingOrder) {
+              handleDispenseOrder(dispensingOrder.id);
+              setDispensingOrder(null);
+            }
+          }}
+          title="Authorize & Dispense Prescription"
+          description={`Are you sure you want to authorize and dispense e-Prescription ${dispensingOrder.id} for ${dispensingOrder.patientName}? This action will commit the pharmacy transaction, deduct the medication quantities from central warehouse stock, and log the dispensation audit.`}
+          confirmText="Authorize & Dispense"
+          cancelText="Hold Order"
+          variant="warning"
+          iconType="prescription"
+          destructiveImpactNotice="Stock inventory levels will be deducted in real-time. Please double-check formulation dosages against patient EHR allergy flags."
+          itemDetails={[
+            { label: 'e-Rx Identifier', value: dispensingOrder.id },
+            { label: 'Patient', value: dispensingOrder.patientName },
+            { label: 'Prescribing Physician', value: dispensingOrder.doctorName },
+            { label: 'Formulations', value: `${dispensingOrder.medications.length} item(s)` },
+            { label: 'Prescribed Date', value: dispensingOrder.date }
+          ]}
+        />
       )}
     </div>
   );

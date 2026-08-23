@@ -596,10 +596,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-250 font-sans flex flex-col">
-      {/* If in Public Portal Mode, render the comprehensive St. Jude Public Hospital Website & MyChart Experience */}
-      {appMode === 'public' ? (
-        <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
-          {/* Top Global Navigation with quick toggle to Staff EMR */}
+      {/* Animated Mode Transition Layer */}
+      <AnimatePresence mode="wait">
+        {appMode === 'public' ? (
+          <motion.div
+            key="public-hospital-portal"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.28, ease: "easeInOut" }}
+            className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden"
+          >
+            {/* Top Global Navigation with quick toggle to Staff EMR */}
           <Header
             appMode={appMode}
             setAppMode={setAppMode}
@@ -635,17 +643,33 @@ export default function App() {
               handleOpenAiAssistant(targetPatient);
             }}
           />
-        </div>
-      ) : !staffUser ? (
-        /* Protected Staff EMR Authentication Gateway Screen */
-        <StaffAuthView
-          onAuthSuccess={handleStaffAuthSuccess}
-          onReturnToPublic={() => setAppMode('public')}
-        />
-      ) : (
-        /* Authenticated Staff Clinical Operations EMR Mode */
-        <div className="flex h-screen w-full min-w-0 overflow-hidden">
-          {/* Sidebar Navigation */}
+          </motion.div>
+        ) : !staffUser ? (
+          /* Protected Staff EMR Authentication Gateway Screen */
+          <motion.div
+            key="staff-emr-auth"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="flex-1 flex flex-col min-w-0 w-full"
+          >
+            <StaffAuthView
+              onAuthSuccess={handleStaffAuthSuccess}
+              onReturnToPublic={() => setAppMode('public')}
+            />
+          </motion.div>
+        ) : (
+          /* Authenticated Staff Clinical Operations EMR Mode */
+          <motion.div
+            key="staff-emr-dashboard"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.28, ease: "easeInOut" }}
+            className="flex h-screen w-full min-w-0 overflow-hidden"
+          >
+            {/* Sidebar Navigation */}
           <Sidebar
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -946,8 +970,9 @@ export default function App() {
             )}
 
           </div>
-        </div>
+        </motion.div>
       )}
+    </AnimatePresence>
 
       {/* --- AI CLINICAL COPILOT MODAL --- */}
       <AiAssistantModal

@@ -17,6 +17,7 @@ import {
   Layers 
 } from 'lucide-react';
 import { WardBed, BedAlloc, Patient, UserRole } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 
 interface BedsViewProps {
   beds: BedAlloc[];
@@ -50,6 +51,9 @@ export default function BedsView({
   const [admitPatientId, setAdmitPatientId] = useState<string>(patients[0]?.id || '');
   const [attendingDoctor, setAttendingDoctor] = useState<string>('Dr. Robert Chen');
   const [nurseAssigned, setNurseAssigned] = useState<string>('Nurse Clara Oswald');
+  
+  // Destructive Action: Discharging Inpatient Confirmation
+  const [dischargingBed, setDischargingBed] = useState<WardBed | null>(null);
 
   // Keyboard Escape listener to dismiss admit modal
   useEffect(() => {
@@ -337,8 +341,9 @@ export default function BedsView({
 
                 {isOccupied && (
                   <button
-                    onClick={() => handleDischargeBed(bed)}
-                    className="px-3 py-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors flex items-center gap-1"
+                    onClick={() => setDischargingBed(bed)}
+                    className="px-3 py-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors flex items-center gap-1 cursor-pointer"
+                    id={`discharge-bed-btn-${bed.id}`}
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Discharge</span>
@@ -433,6 +438,33 @@ export default function BedsView({
             </form>
           </div>
         </div>
+      )}
+      {/* Discharge Confirmation Modal */}
+      {dischargingBed && (
+        <ConfirmationModal
+          isOpen={!!dischargingBed}
+          onClose={() => setDischargingBed(null)}
+          onConfirm={() => {
+            if (dischargingBed) {
+              handleDischargeBed(dischargingBed);
+              setDischargingBed(null);
+            }
+          }}
+          title="Confirm Inpatient Discharge & Bed Sanitation"
+          description={`Are you sure you want to discharge ${dischargingBed.patientName || 'the patient'} from ${dischargingBed.bedNumber} (${dischargingBed.ward})? The bed will immediately transition to Sanitizing status.`}
+          confirmText="Confirm Discharge"
+          cancelText="Keep Admitted"
+          variant="warning"
+          iconType="discharge"
+          destructiveImpactNotice="Discharging this inpatient will update their EHR status to Discharged and release the bed unit for housekeeping turnover."
+          itemDetails={[
+            { label: 'Patient Name', value: dischargingBed.patientName || 'Unknown' },
+            { label: 'Bed Unit', value: dischargingBed.bedNumber },
+            { label: 'Ward Division', value: dischargingBed.ward },
+            { label: 'Attending Physician', value: dischargingBed.attendingDoctor || 'On Duty MD' },
+            { label: 'Admitted Date', value: dischargingBed.admittedDate || 'Recent' }
+          ]}
+        />
       )}
     </div>
   );

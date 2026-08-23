@@ -17,6 +17,7 @@ import {
   Flame 
 } from 'lucide-react';
 import { EmergencyCase, Patient, UserRole } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 
 interface EmergencyTriageViewProps {
   emergencyCases: EmergencyCase[];
@@ -40,6 +41,9 @@ export default function EmergencyTriageView({
   const [localSearch, setLocalSearch] = useState('');
   const [selectedTriageFilter, setSelectedTriageFilter] = useState<string>('All');
   const [isRapidIntakeOpen, setIsRapidIntakeOpen] = useState(false);
+  
+  // Destructive Action Confirmation: Discharge Emergency Case
+  const [dischargingCase, setDischargingCase] = useState<EmergencyCase | null>(null);
 
   // Active Code Alert Simulator
   const [activeCodeAlert, setActiveCodeAlert] = useState<string | null>(null);
@@ -370,8 +374,9 @@ export default function EmergencyTriageView({
                         Admit to ICU
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(er.id, 'Discharged')}
-                        className="px-3 py-1.5 font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+                        onClick={() => setDischargingCase(er)}
+                        className="px-3 py-1.5 font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                        id={`discharge-er-case-${er.id}`}
                       >
                         Discharge Home
                       </button>
@@ -543,6 +548,33 @@ export default function EmergencyTriageView({
             </form>
           </div>
         </div>
+      )}
+      {/* Emergency Discharge Confirmation Dialog */}
+      {dischargingCase && (
+        <ConfirmationModal
+          isOpen={!!dischargingCase}
+          onClose={() => setDischargingCase(null)}
+          onConfirm={() => {
+            if (dischargingCase) {
+              handleUpdateStatus(dischargingCase.id, 'Discharged');
+              setDischargingCase(null);
+            }
+          }}
+          title="Confirm Emergency Discharge"
+          description={`Are you sure you want to discharge ${dischargingCase.patientName} from ${dischargingCase.assignedBay}? Ensure vital signs are stable and post-discharge care instructions have been reviewed.`}
+          confirmText="Discharge Patient"
+          cancelText="Keep in Trauma Bay"
+          variant="warning"
+          iconType="discharge"
+          destructiveImpactNotice="Patient will be marked as Discharged from the active Emergency Room board and the trauma bay will be released."
+          itemDetails={[
+            { label: 'Patient Name', value: dischargingCase.patientName },
+            { label: 'Assigned Bay', value: dischargingCase.assignedBay },
+            { label: 'Triage Severity', value: dischargingCase.triageLevel },
+            { label: 'Attending MD', value: dischargingCase.attendingDoctor },
+            { label: 'Chief Complaint', value: dischargingCase.chiefComplaint }
+          ]}
+        />
       )}
     </div>
   );

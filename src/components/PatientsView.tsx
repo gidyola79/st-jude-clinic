@@ -21,12 +21,20 @@ import {
   Pill, 
   X, 
   Clock,
-  Eye
+  Eye,
+  Fingerprint,
+  ScanFace,
+  ShieldCheck,
+  Lock,
+  KeyRound,
+  Shield
 } from 'lucide-react';
 import { Patient, MedicalRecord, Prescription, VitalsRecord, LabTest, UserRole } from '../types';
 import { savePatient, updatePatientRecord } from '../lib/dbService';
 import PatientQuickViewModal from './PatientQuickViewModal';
 import DischargeSummaryModal from './DischargeSummaryModal';
+import BiometricAuthModal from './BiometricAuthModal';
+import ConfirmationModal from './ConfirmationModal';
 
 interface PatientsViewProps {
   patients: Patient[];
@@ -56,6 +64,34 @@ export default function PatientsView({
   const [localSearch, setLocalSearch] = useState('');
   const [patientFilterMode, setPatientFilterMode] = useState<'All' | 'Admitted' | 'Outpatient'>('All');
   const [activePatientSubTab, setActivePatientSubTab] = useState<'overview' | 'vitals' | 'labs' | 'history'>('overview');
+
+  // Biometric Step-Up Security Clearance for Sensitive EHR Data
+  const [biometricTargetPatient, setBiometricTargetPatient] = useState<Patient | null>(null);
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
+  const [verifiedPatientIds, setVerifiedPatientIds] = useState<Set<string>>(() => new Set());
+
+  const handleRequestOpenPatient = (patient: Patient) => {
+    if (!verifiedPatientIds.has(patient.id)) {
+      setBiometricTargetPatient(patient);
+      setIsBiometricModalOpen(true);
+    } else {
+      setSelectedPatientId(patient.id);
+    }
+  };
+
+  const handleBiometricVerified = () => {
+    if (biometricTargetPatient) {
+      setVerifiedPatientIds(prev => new Set(prev).add(biometricTargetPatient.id));
+      setSelectedPatientId(biometricTargetPatient.id);
+      addNotification(
+        'Biometric Clearance Approved',
+        `HIPAA §164.312 biometric verification successful for ${biometricTargetPatient.name} (#${biometricTargetPatient.id}).`,
+        'Success'
+      );
+      setIsBiometricModalOpen(false);
+      setBiometricTargetPatient(null);
+    }
+  };
 
   // Quick Add Patient Form state (Admission)
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
@@ -103,6 +139,9 @@ export default function PatientsView({
 
   // Printable Medical Summary
   const [showPrintModal, setShowPrintModal] = useState(false);
+  
+  // Destructive Action: Remove Drug Confirmation
+  const [drugToRemove, setDrugToRemove] = useState<{ index: number; rx: Prescription } | null>(null);
 
   // Keyboard Escape listener to dismiss any open modals in PatientsView
   useEffect(() => {
@@ -359,6 +398,26 @@ export default function PatientsView({
             </button>
 
             <div className="flex items-center gap-2 flex-wrap">
+              {/* HIPAA Biometric Clearance Status Badge */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Biometric HIPAA Clearance Active</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBiometricTargetPatient(activePat);
+                  setIsBiometricModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                title="Re-verify Biometric Step-Up Verification"
+                id="reverify-biometric-btn"
+              >
+                <Fingerprint className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <span>Re-verify Biometrics</span>
+              </button>
+
               <button
                 id="generate-discharge-summary-btn"
                 onClick={() => setDischargeModalPatient(activePat)}
@@ -578,16 +637,20 @@ export default function PatientsView({
                       </button>
 
                       {tempPrescriptions.length > 0 && (
-                        <div className="space-y-1 pt-2 border-t border-slate-200">
+                        <div className="space-y-1 pt-2 border-t border-slate-200 dark:border-slate-800">
                           {tempPrescriptions.map((rx, idx) => (
-                            <div key={idx} className="flex justify-between items-center p-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200">
-                              <span><strong>{rx.medication}</strong> {rx.dosage} - {rx.frequency} ({rx.duration})</span>
+                            <div key={idx} className="flex justify-between items-center p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
+                              <span className="text-slate-800 dark:text-slate-200">
+                                <strong className="font-bold text-slate-900 dark:text-white">{rx.medication}</strong> {rx.dosage} - {rx.frequency} ({rx.duration})
+                              </span>
                               <button
                                 type="button"
-                                onClick={() => setTempPrescriptions(tempPrescriptions.filter((_, i) => i !== idx))}
-                                className="text-red-500 font-bold px-1"
+                                onClick={() => setDrugToRemove({ index: idx, rx })}
+                                className="px-2 py-0.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded border border-rose-200 dark:border-rose-900/50 font-bold transition-colors cursor-pointer"
+                                title="Remove medication from prescription"
+                                id={`remove-temp-rx-${idx}`}
                               >
-                                ×
+                                Remove
                               </button>
                             </div>
                           ))}
@@ -817,7 +880,7 @@ export default function PatientsView({
                 <div
                   key={pat.id}
                   id={`patient-card-${pat.id}`}
-                  onClick={() => setSelectedPatientId(pat.id)}
+                  onClick={() => handleRequestOpenPatient(pat)}
                   className="relative p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition-all cursor-pointer space-y-3"
                 >
                   <div className="flex items-center justify-between gap-2 min-w-0">
@@ -954,7 +1017,14 @@ export default function PatientsView({
       <PatientQuickViewModal
         patient={quickViewPatient}
         onClose={() => setQuickViewPatient(null)}
-        onOpenFullChart={(id) => setSelectedPatientId(id)}
+        onOpenFullChart={(id) => {
+          const pat = patients.find(p => p.id === id);
+          if (pat) {
+            handleRequestOpenPatient(pat);
+          } else {
+            setSelectedPatientId(id);
+          }
+        }}
         onOpenAiAssistant={onOpenAiAssistant}
         onOpenDischargeSummary={(pat) => setDischargeModalPatient(pat)}
       />
@@ -1331,6 +1401,57 @@ export default function PatientsView({
         patient={dischargeModalPatient}
         onSaveSummaryToRecords={handleSaveDischargeSummary}
       />
+
+      {/* Biometric Step-Up Authentication Modal for Sensitive EHR Data */}
+      <BiometricAuthModal
+        isOpen={isBiometricModalOpen}
+        onClose={() => {
+          setIsBiometricModalOpen(false);
+          setBiometricTargetPatient(null);
+        }}
+        mode="ehr_access"
+        patient={biometricTargetPatient}
+        accessScopeTitle="Confidential Patient Medical Records & Diagnostic Orders"
+        onBiometricSuccess={() => {
+          handleBiometricVerified();
+        }}
+        onVerified={() => {
+          handleBiometricVerified();
+        }}
+      />
+
+      {/* Confirmation Dialog for Destructive Drug Removal from Prescription */}
+      {drugToRemove && (
+        <ConfirmationModal
+          isOpen={!!drugToRemove}
+          onClose={() => setDrugToRemove(null)}
+          onConfirm={() => {
+            if (drugToRemove) {
+              setTempPrescriptions(prev => prev.filter((_, i) => i !== drugToRemove.index));
+              addNotification(
+                'Prescription Order Updated',
+                `Removed ${drugToRemove.rx.medication} from active consult draft.`,
+                'Info'
+              );
+              setDrugToRemove(null);
+            }
+          }}
+          title="Remove Medication from Prescription"
+          description="Are you sure you want to remove this medication from the current draft prescription order before saving the consultation to the EHR?"
+          confirmText="Remove Drug"
+          cancelText="Keep in Rx"
+          variant="warning"
+          iconType="prescription"
+          destructiveImpactNotice="Removing this medication will omit it from the final signed e-Prescription dispatched to the St. Jude central pharmacy."
+          itemDetails={[
+            { label: 'Medication', value: drugToRemove.rx.medication },
+            { label: 'Dosage', value: drugToRemove.rx.dosage },
+            { label: 'Frequency', value: drugToRemove.rx.frequency },
+            { label: 'Duration', value: drugToRemove.rx.duration },
+            ...(activePat ? [{ label: 'Patient', value: activePat.name }] : [])
+          ]}
+        />
+      )}
     </div>
   );
 }
